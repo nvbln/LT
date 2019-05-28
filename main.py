@@ -10,6 +10,34 @@ def printHelp():
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
 
+def evaluateTestQuestions():
+    with open("all_questions_and_answers.tsv") as tsvfile:
+        tsvreader = csv.reader(tsvfile, delimiter="\t")
+
+        total_correct = 0
+        total_lines = sum(1 for row in tsvreader)
+        tsvfile.seek(0)
+        for line in tsvreader:
+            # Get the answer
+            #answer = evaluateQuestion() 
+            answer = line[2:] # These lines should be commented when
+            if len(answer) == 1: # we get an output from evaluateQueston()
+                answer = answer[0] # and we want to test the program.
+
+            if isinstance(answer, list):
+                correct = True
+                for i in range(len(answer)):
+                    if answer[i] != line[i + 2]:
+                        correct = False
+                if correct:
+                    total_correct += 1
+            else:
+                if answer == line[2]:
+                    total_correct += 1
+
+        print("Percentage of correct answers: " 
+              + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
+
 def testQuestions():
     with open("all_questions_and_answers.tsv") as tsvfile:
         tsvreader = csv.reader(tsvfile, delimiter="\t")
