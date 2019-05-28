@@ -6,6 +6,9 @@ import wikidataQuery as q
 import csv
 
 def printHelp():
+    print("Available arguments:")
+    print("-h, --help       Prints this list.")
+    print("-t, --test       Evaluates the program based on the test questions.")
 
 def testQuestions():
 	with open("all_questions_and_answers.tsv") as tsvfile:
