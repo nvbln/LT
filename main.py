@@ -28,12 +28,12 @@ def evaluateTestQuestions():
             if isinstance(answer, list):
                 correct = True
                 for i in range(len(answer)):
-                    if answer[i] != line[i + 2]:
+                    if answer[i].lower() != line[i + 2].lower():
                         correct = False
                 if correct:
                     total_correct += 1
             else:
-                if answer == line[2]:
+                if answer.lower() == line[2].lower():
                     total_correct += 1
 
         print("Percentage of correct answers: " 
