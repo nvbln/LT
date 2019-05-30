@@ -93,7 +93,12 @@ def main(argv, nlp):
 
         # Input here the process for answering the question
         s.syntacticAnalysis(nlp, line)
-        q.makeQuery()
+
+        # Test keywords
+        keywords = [("birth name", "property"), ("Dave Grohl", "entity")]
+        answers = q.makeQuery(keywords)
+        for answer in answers:
+            print(answer)
         print("State a question:")
 
 if __name__ == "__main__":
