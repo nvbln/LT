@@ -81,6 +81,17 @@ def syntacticAnalysis(nlp, line):
         if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
 
+    elif root_pos == 0 or aux_pos == 0:
+        # Likely a yes/no question
+        if aux_pos == 0:
+            keywords.append((getPhrase(question, aux_pos), "question_word"))
+            keywords.append((getPhrase(question, root_pos), "property"))
+            keywords.append((getPhrase(question, pobj_pos), "property attribute"))
+        elif root_pos == 0:
+            keywords.append((getPhrase(question, root_pos), "question_word"))
+            
+        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+
     return keywords
 
 # Gets the syntactic dependency on the given position
