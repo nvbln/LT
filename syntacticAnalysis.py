@@ -80,7 +80,7 @@ def syntacticAnalysis(nlp, line):
         if aux_pos == 0:
             keywords.append((getPhrase(question, aux_pos), "question_word"))
             keywords.append((getPhrase(question, root_pos), "property"))
-            keywords.append((getPhrase(question, pobj_pos), "property attribute"))
+            keywords.append((getPhrase(question, pobj_pos), "property_attribute"))
         elif root_pos == 0:
             keywords.append((getPhrase(question, root_pos), "question_word"))
             
