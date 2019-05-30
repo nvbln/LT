@@ -80,7 +80,7 @@ def main(argv, nlp):
 
     if load_nlp:
         print("Loading SpaCy library...")
-        nlp = spacy.load('en')
+        nlp = spacy.load('en_core_web_md')
 
     # testQuestions()
     print("State a question:")
