@@ -2,10 +2,11 @@
 import requests
 
 # A pre-defined dictionary for difficult terms
-key_words_dict = {'band members': 'has part', 'members': 'has part',
+property_dict = {'band members': 'has part', 'members': 'has part',
                   'member': 'has part', 'band member': 'has part',
                   'founding year': 'inception', 'bandmember': 'has part',
-                  'bandmembers': 'has part', 'founding': 'inception'}
+                  'bandmembers': 'has part', 'founding': 'inception',
+                  'play': 'instrument'}
 
 # List of w-words, feel free to add any words I forgot
 w_words_list = ['What', 'Who', 'When', 'Where', 'Why', 'How', 'Which']
@@ -26,9 +27,12 @@ def makeQuery(keywords):
                 query_type = 'yes/no' 
                 
         elif keyword[1] == "property":
-            property_id = searchEntity(keyword[0], "property")
+            prop = property_dict.get(keyword[0], keyword[0])
+            property_id = searchEntity(prop, "property")
+            
         elif keyword[1] == "entity":
             entity_id = searchEntity(keyword[0], "entity")
+            
         elif keyword[1] == "property_attribute":
             # TODO attribute is not always entity, right? needs to be fixed
             prop_attribute_id = searchEntity(keyword[0], "entity")
@@ -52,6 +56,8 @@ def searchEntity(entity, string_type):
 
     params['search'] = entity.rstrip()
     json = requests.get(url,params).json()
+    
+    print(entity, '->', json['search'][0]['label'])
     
     # Return the most likely entity
     return json['search'][0]['id']
