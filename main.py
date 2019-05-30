@@ -9,6 +9,7 @@ def printHelp():
     print("Available arguments:")
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
+    print("-w, --wrapper    Does not load NLP.")
 
 def evaluateTestQuestions():
     with open("all_questions_and_answers.tsv") as tsvfile:
@@ -48,14 +49,16 @@ def testQuestions():
                 if x != line[0] and x != line[1]:
                     print(" - " + x)
 
-def main(argv):
+def main(argv, nlp):
+    load_nlp = True
+
     # Check commandline arguments
     full_cmd_arguments = argv
     argument_list = full_cmd_arguments[1:]
     
     # Argument options: help, test
-    unix_options = "ht"
-    gnu_options = ["help", "test"]
+    unix_options = "htw"
+    gnu_options = ["help", "test", "wrapper"]
 
     try:
         arguments, values = getopt.getopt(argument_list, unix_options, gnu_options)
@@ -72,18 +75,27 @@ def main(argv):
         elif current_argument in ("-t", "--test"):
             evaluateTestQuestions()
             exit()
+        elif current_argument in ("-w", "--wrapper"):
+            load_nlp = False        
 
-    print("Loading SpaCy library...")
-    # nlp = spacy.load('en')
+    if load_nlp:
+        print("Loading SpaCy library...")
+        nlp = spacy.load('en')
+
     # testQuestions()
     print("State a question:")
     for line in sys.stdin:
         line = line.rstrip()
+
+        # Finish the program when typing exit.
+        if line == "exit":
+            break
+
         # Input here the process for answering the question
         s.syntacticAnalysis(nlp, line)
         q.makeQuery()
         print("State a question:")
 
 if __name__ == "__main__":
-    main(sys.argv)
-    
+    nlp = None
+    main(sys.argv, nlp)
