@@ -75,7 +75,7 @@ def main(argv):
 
     print("Loading SpaCy library...")
     # nlp = spacy.load('en')
-    testQuestions()
+    # testQuestions()
     print("State a question:")
     for line in sys.stdin:
         line = line.rstrip()
