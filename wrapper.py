@@ -13,7 +13,7 @@ if __name__ == "__main__":
     while True:
         # Load nlp if not yet done so (so only at the start).
         if not nlp:
-            nlp = spacy.load('en')
+            nlp = spacy.load('en_core_web_md')
         # Run main.py as if it is called normally (but with the wrapper parameter).
         try:
             main.main(['main.py', '--wrapper'], nlp)
