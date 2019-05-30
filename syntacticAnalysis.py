@@ -21,10 +21,35 @@ def syntacticAnalysis(nlp, line):
     nsubj_pos = sentenceContains(question, "nsubj", 0)
     pobj_pos = sentenceContains(question, "pobj", 0)
     poss_pos = sentenceContains(question, "poss", 0)
-    prep_pos = sentenceContains(questioin, "prep", 0)
+    prep_pos = sentenceContains(question, "prep", 0)
     root_pos = sentenceContains(question, "ROOT", 0)
 
     ## Get the question types based on the syntactic dependencies found.
+    # Check if the sentence contains advmod, nsubj, and root.
+    # Check if the order of dependencies is correct.
+    if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
+        # Likely a When/what/who is/are X [verb] question.
+        keywords.append((getPhrase(question, advmod_pos), "question_word"))
+        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        keywords.append((getPhrase(question, root_pos), "property"))
+    elif (root_pos > 0
+            and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
+            and pobj_pos > root_pos):
+        # Likely an X of Y question.
+        keywords.append((getPhrase(question, pobj_pos), "entity"))
+
+        secondAttribute = sentenceContains(question, "attr", root_pos)
+        if nsubj_pos != -1:
+            keywords.append((getPhrase(question, nsubj_pos), "property"))
+        elif secondAttribute != -1:
+            keywords.append((getPhrase(question, secondAttribute), "property"))
+
+        if advmod_pos != -1:
+            keywords.append((getPhrase(question, advmod_pos), "question_word"))
+        elif attr_pos != -1:
+            keywords.append((getPhrase(question, attr_pos), "question_word"))
+
+    return keywords
 
 # Gets the syntactic dependency on the given position
 # and all the compounds in front of it.
