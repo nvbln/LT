@@ -14,7 +14,16 @@ if __name__ == "__main__":
         if not nlp:
             nlp = spacy.load('en')
         # Run main.py as if it is called normally (but with the wrapper parameter).
-        main.main(['main.py', '--wrapper'], nlp)
+        try:
+            main.main(['main.py', '--wrapper'], nlp)
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            # Possibly dangerous because we might be catching errors that we
+            # do not want to catch. But it prevents wrapper from exiting when
+            # an error occurs in main.
+            print(e)
+
         print("Press enter to re-run the script, CTRL-C to exit")
         sys.stdin.readline()
 
