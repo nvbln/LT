@@ -92,10 +92,9 @@ def main(argv, nlp):
             break
 
         # Input here the process for answering the question
-        s.syntacticAnalysis(nlp, line)
+        keywords = s.syntacticAnalysis(nlp, line)
 
         # Test keywords
-        keywords = [("birth name", "property"), ("Dave Grohl", "entity")]
         answers = q.makeQuery(keywords)
         for answer in answers:
             print(answer)
