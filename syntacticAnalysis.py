@@ -26,6 +26,23 @@ def syntacticAnalysis(nlp, line):
 
     ## Get the question types based on the syntactic dependencies found.
 
+# Gets the syntactic dependency on the given position
+# and all the compounds in front of it.
+def getPhrase(sentence, position):
+    # TODO: Make effective use of the 'prep' dependency.
+    # For example: "United States of America" is one phrase,
+    # but it will not be seen as such unless using this dependency.
+
+    word = sentence[position]
+    phrase = ""
+    position -= 1
+    while (position >= 0 and (sentence[position].dep_ == "compound"
+            or sentence[position].dep_ == "amod")):
+        phrase += sentence[position].text + " "
+        position -= 1
+
+    return phrase + word.text
+
 def sentenceContains(sentence, keyword, start_position):
     # Return the position of the first encounter
     # with the requested keyword from the start_position.
