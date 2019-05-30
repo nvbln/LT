@@ -1,4 +1,5 @@
 import sys
+import traceback
 from importlib import reload
 import main
 import syntacticAnalysis
@@ -22,7 +23,7 @@ if __name__ == "__main__":
             # Possibly dangerous because we might be catching errors that we
             # do not want to catch. But it prevents wrapper from exiting when
             # an error occurs in main.
-            print(e)
+            print(traceback.format_exc())
 
         print("Press enter to re-run the script, CTRL-C to exit")
         sys.stdin.readline()
