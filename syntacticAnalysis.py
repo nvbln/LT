@@ -28,7 +28,7 @@ def syntacticAnalysis(nlp, line):
     # Check if the sentence contains advmod, nsubj, and root.
     # Check if the order of dependencies is correct.
     if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
-        # Likely a When/what/who is/are X [verb] question.
+        # Likely a When/what/who is/are/did X [verb] question.
         keywords.append((getPhrase(question, advmod_pos), "question_word"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, root_pos), "property"))
