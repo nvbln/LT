@@ -15,6 +15,7 @@ def syntacticAnalysis(nlp, line):
     # Skip the first word as it is likely a question word.
     advmod_pos = sentenceContains(question, "advmod", 0)
     auxpass_pos = sentenceContains(question, "auxpass", 0)
+    aux_pos = sentenceContains(question, "aux", 0)
     attr_pos = sentenceContains(question, "attr", 0)
     case_pos = sentenceContains(question, "case", 0)
     dobj_pos = sentenceContains(question, "dobj", 0)
@@ -55,6 +56,29 @@ def syntacticAnalysis(nlp, line):
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
 
         if attr_pos != -1:
+            keywords.append((getPhrase(question, attr_pos), "question_word"))
+    elif (root_pos != -1 and poss_pos > root_pos
+            and case_pos > poss_pos 
+            and sentenceContains(question, "attr", case_pos) > case_pos):
+        # Likely an X's Y question.
+        keywords.append((getPhrase(question, poss_pos), "entity"))
+
+        if attr_pos == 0:
+            keywords.append((getPhrase(question, attr_pos), "question_word"))
+            secondAttribute = sentenceContains(question, "attr", case_pos)
+            if secondAttribute != -1:
+                keywords.append((getPhrase(question, secondAttribute), "property"))
+
+        elif attr_pos > case_pos:
+            keywords.append((getPhrase(question, attr_pos), "property"))
+    elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
+        # Likely a What X [verb] Y question.
+        # TODO: Discuss whether we should also append the verb.
+
+        keywords.append((getPhrase(question, nsubj_pos), "property"))
+        keywords.append((getPhrase(question, dobj_pos), "entity"))
+
+        if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
 
     return keywords
