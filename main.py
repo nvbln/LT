@@ -11,7 +11,17 @@ def printHelp():
     print("-t, --test       Evaluates the program based on the test questions.")
     print("-w, --wrapper    Does not load NLP.")
 
+def evaluateQuestion(nlp, line):
+    # Input here the process for answering the question
+    keywords = s.syntacticAnalysis(nlp, line)
+
+    # Test keywords
+    return q.makeQuery(keywords)
+
 def evaluateTestQuestions():
+    print("Loading SpaCy library...")
+    nlp = spacy.load('en_core_web_md')
+
     with open("all_questions_and_answers.tsv") as tsvfile:
         tsvreader = csv.reader(tsvfile, delimiter="\t")
 
@@ -20,10 +30,7 @@ def evaluateTestQuestions():
         tsvfile.seek(0)
         for line in tsvreader:
             # Get the answer
-            #answer = evaluateQuestion() 
-            answer = line[2:] # These lines should be commented when
-            if len(answer) == 1: # we get an output from evaluateQueston()
-                answer = answer[0] # and we want to test the program.
+            answer = evaluateQuestion(nlp, line[0]) 
 
             if isinstance(answer, list):
                 correct = True
@@ -91,11 +98,9 @@ def main(argv, nlp):
         if line == "exit":
             break
 
-        # Input here the process for answering the question
-        keywords = s.syntacticAnalysis(nlp, line)
+        # Evaluate the question and get the answer.
+        answers = evaluateQuestion(nlp, line)
 
-        # Test keywords
-        answers = q.makeQuery(keywords)
         for answer in answers:
             print(answer)
         print("State a question:")
