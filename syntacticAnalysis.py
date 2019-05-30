@@ -49,7 +49,7 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, advmod_pos), "question_word"))
         elif attr_pos != -1:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
-    elif (dobj_pos != -1 and aux_pos > dobj_pos and donsubj_pos > aux_pos 
+    elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb]?
         keywords.append((getPhrase(question, dobj_pos), "property"))
