@@ -1,11 +1,5 @@
 # Functions needed for syntactic analysis
 
-# A pre-defined dictionary for difficult terms
-key_words_dict = {'band members': 'has part', 'members': 'has part',
-                  'member': 'has part', 'band member': 'has part',
-                  'founding year': 'inception', 'bandmember': 'has part',
-                  'bandmembers': 'has part', 'founding': 'inception'}
-
 def syntacticAnalysis(nlp, line):
     question = nlp(line)
 

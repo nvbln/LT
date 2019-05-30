@@ -1,6 +1,12 @@
 # Functions needed for making queries for WikiData
 import requests
 
+# A pre-defined dictionary for difficult terms
+key_words_dict = {'band members': 'has part', 'members': 'has part',
+                  'member': 'has part', 'band member': 'has part',
+                  'founding year': 'inception', 'bandmember': 'has part',
+                  'bandmembers': 'has part', 'founding': 'inception'}
+
 def makeQuery(keywords):
     property_id = None
     entity_id = None
