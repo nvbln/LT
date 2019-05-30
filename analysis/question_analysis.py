@@ -28,10 +28,12 @@ try:
     # Get sentence word dependencies. Put unique "sentences" in a list.
     # Also keep track of the number of occurrences of such a sentence.
     structures = []
+    structures_examples = []
     structures_count = []
     total = len(questions)
     for question in questions:
-        question = nlp(question)
+        line = question
+        question = nlp(line)
         non_compound_question = []
         for word in question:
             if (word.dep_ != "compound" and word.dep_ != "punct"):
@@ -39,6 +41,7 @@ try:
 
         if non_compound_question not in structures:
             structures.append(non_compound_question)
+            structures_examples.append(line)
             structures_count.append(1)
         else:
             index = structures.index(non_compound_question)
@@ -57,6 +60,7 @@ try:
         print('[%s]' % ', '.join(map(str, structure[1])), end='')
         print(" count: " + str(structure[0]) + " percentage: "
                 + "{0:.2f}".format(structure[0]/total))
+        print("Example: " + structures_examples[structures.index(structure[1])])
 
     total = len(merged_structures)
     print("Total number of unique structures: " + str(total))
