@@ -26,6 +26,7 @@ def evaluateTestQuestions():
         tsvreader = csv.reader(tsvfile, delimiter="\t")
 
         total_correct = 0
+        total_incorrect = 0
         total_lines = sum(1 for row in tsvreader)
         tsvfile.seek(0)
         for line in tsvreader:
@@ -39,9 +40,16 @@ def evaluateTestQuestions():
                         correct = False
                 if correct:
                     total_correct += 1
+                else:
+                    total_incorrect += 1
             else:
                 if answer.lower() == line[2].lower():
                     total_correct += 1
+                else:
+                    total_incorrect += 1
+            print("\rAnswered correctly: " + str(total_correct) + "/" 
+                    + str(total_lines) + ". Answered incorrectly: " 
+                    + str(total_incorrect) + "/" + str(total_lines), end="")
 
         print("Percentage of correct answers: " 
               + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
