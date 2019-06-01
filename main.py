@@ -11,30 +11,45 @@ def printHelp():
     print("-t, --test       Evaluates the program based on the test questions.")
     print("-w, --wrapper    Does not load NLP.")
 
+def evaluateQuestion(nlp, line):
+    # Input here the process for answering the question
+    keywords = s.syntacticAnalysis(nlp, line)
+
+    # Test keywords
+    return q.makeQuery(keywords)
+
 def evaluateTestQuestions():
+    print("Loading SpaCy library...")
+    nlp = spacy.load('en_core_web_md')
+
     with open("all_questions_and_answers.tsv") as tsvfile:
         tsvreader = csv.reader(tsvfile, delimiter="\t")
 
         total_correct = 0
+        total_incorrect = 0
         total_lines = sum(1 for row in tsvreader)
         tsvfile.seek(0)
         for line in tsvreader:
             # Get the answer
-            #answer = evaluateQuestion() 
-            answer = line[2:] # These lines should be commented when
-            if len(answer) == 1: # we get an output from evaluateQueston()
-                answer = answer[0] # and we want to test the program.
+            answer = evaluateQuestion(nlp, line[0]) 
 
             if isinstance(answer, list):
                 correct = True
                 for i in range(len(answer)):
-                    if answer[i] != line[i + 2]:
+                    if answer[i].lower() != line[i + 2].lower():
                         correct = False
                 if correct:
                     total_correct += 1
+                else:
+                    total_incorrect += 1
             else:
-                if answer == line[2]:
+                if answer.lower() == line[2].lower():
                     total_correct += 1
+                else:
+                    total_incorrect += 1
+            print("\rAnswered correctly: " + str(total_correct) + "/" 
+                    + str(total_lines) + ". Answered incorrectly: " 
+                    + str(total_incorrect) + "/" + str(total_lines), end="")
 
         print("Percentage of correct answers: " 
               + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
@@ -91,11 +106,9 @@ def main(argv, nlp):
         if line == "exit":
             break
 
-        # Input here the process for answering the question
-        keywords = s.syntacticAnalysis(nlp, line)
+        # Evaluate the question and get the answer.
+        answers = evaluateQuestion(nlp, line)
 
-        # Test keywords
-        answers = q.makeQuery(keywords)
         for answer in answers:
             print(answer)
         print("State a question:")
