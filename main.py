@@ -78,6 +78,7 @@ def testQuestions():
 def main(argv, nlp):
     # Do some necessary initialisation
     load_nlp = True
+    test_questions = False
     settings.init()
 
     # Check commandline arguments
@@ -101,12 +102,15 @@ def main(argv, nlp):
             printHelp()
             exit()
         elif current_argument in ("-t", "--test"):
-            evaluateTestQuestions()
-            exit()
+            test_questions = True
         elif current_argument in ("-w", "--wrapper"):
             load_nlp = False        
         elif current_argument in ("-v", "--verbose"):
             settings.verbose = True 
+
+    if test_questions:
+        evaluateTestQuestions()
+        exit()
 
     if load_nlp:
         if settings.verbose:
