@@ -3,6 +3,7 @@
 import getopt, sys, spacy
 import syntacticAnalysis as s
 import wikidataQuery as q
+import settings
 import csv
 
 def printHelp():
@@ -10,6 +11,7 @@ def printHelp():
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
     print("-w, --wrapper    Does not load NLP.")
+    print("-v, --verbose    Verbose mode. Prints debugging messages about it's progress.")
 
 def evaluateQuestion(nlp, line):
     # Input here the process for answering the question
@@ -65,15 +67,17 @@ def testQuestions():
                     print(" - " + x)
 
 def main(argv, nlp):
+    # Do some necessary initialisation
     load_nlp = True
+    settings.init()
 
     # Check commandline arguments
     full_cmd_arguments = argv
     argument_list = full_cmd_arguments[1:]
     
     # Argument options: help, test
-    unix_options = "htw"
-    gnu_options = ["help", "test", "wrapper"]
+    unix_options = "htwv"
+    gnu_options = ["help", "test", "wrapper", "verbose"]
 
     try:
         arguments, values = getopt.getopt(argument_list, unix_options, gnu_options)
@@ -92,9 +96,12 @@ def main(argv, nlp):
             exit()
         elif current_argument in ("-w", "--wrapper"):
             load_nlp = False        
+        elif current_argument in ("-v", "--verbose"):
+            settings.verbose = True 
 
     if load_nlp:
-        print("Loading SpaCy library...")
+        if settings.verbose:
+            print("Loading SpaCy library...")
         nlp = spacy.load('en_core_web_md')
 
     # testQuestions()
