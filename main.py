@@ -21,8 +21,13 @@ def evaluateQuestion(nlp, line):
     return q.makeQuery(keywords)
 
 def evaluateTestQuestions():
+    local_verbose = False
     if settings.verbose:
         print("Loading SpaCy library...")
+
+        # When combining test and verbose, only use verbose locally.
+        local_verbose = True
+        settings.verbose = False
     nlp = spacy.load('en_core_web_md')
 
     with open("all_questions_and_answers.tsv") as tsvfile:
@@ -53,7 +58,7 @@ def evaluateTestQuestions():
                 else:
                     total_incorrect += 1
 
-            if settings.verbose:
+            if local_verbose:
                 print("") # Necessary newline due to line 61.
                 if current_correct == total_correct:
                     print("Incorrect: " + line[0])
