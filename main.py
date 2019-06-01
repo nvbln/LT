@@ -21,7 +21,8 @@ def evaluateQuestion(nlp, line):
     return q.makeQuery(keywords)
 
 def evaluateTestQuestions():
-    print("Loading SpaCy library...")
+    if settings.verbose:
+        print("Loading SpaCy library...")
     nlp = spacy.load('en_core_web_md')
 
     with open("all_questions_and_answers.tsv") as tsvfile:
