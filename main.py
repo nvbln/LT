@@ -34,6 +34,8 @@ def evaluateTestQuestions():
         for line in tsvreader:
             # Get the answer
             answer = evaluateQuestion(nlp, line[0]) 
+            
+            current_correct = total_correct
 
             if isinstance(answer, list):
                 correct = True
@@ -49,6 +51,13 @@ def evaluateTestQuestions():
                     total_correct += 1
                 else:
                     total_incorrect += 1
+
+            if settings.verbose:
+                print("") # Necessary newline due to line 61.
+                if current_correct == total_correct:
+                    print("Incorrect: " + line[0])
+                else:
+                    print("Correct: " + line[0])
             print("\rAnswered correctly: " + str(total_correct) + "/" 
                     + str(total_lines) + ". Answered incorrectly: " 
                     + str(total_incorrect) + "/" + str(total_lines), end="")
