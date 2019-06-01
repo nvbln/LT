@@ -1,4 +1,5 @@
 # Functions needed for syntactic analysis
+import settings
 
 def syntacticAnalysis(nlp, line):
     question = nlp(line)
@@ -85,6 +86,9 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, root_pos), "question_word"))
             
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
+
+    if settings.verbose:
+        print(keywords)
 
     return keywords
 

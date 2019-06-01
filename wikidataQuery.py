@@ -1,5 +1,6 @@
 # Functions needed for making queries for WikiData
 import requests
+import settings
 
 # A pre-defined dictionary for difficult terms
 property_dict = {'band members': 'has part', 'members': 'has part',
@@ -60,7 +61,10 @@ def searchEntity(entity, string_type):
     print(entity, '->', json['search'][0]['label'])
     
     # Return the most likely entity
-    return json['search'][0]['id']
+    if len(json['search']) > 0:
+        if settings.verbose:
+            print(json['search'][0]['id'])
+        return json['search'][0]['id']
 
 # Creates a query and returns the answer(s) on that query.
 def submitQuery(entity_id, property_id):
