@@ -1,4 +1,5 @@
 # Functions needed for syntactic analysis
+import settings
 
 # A pre-defined dictionary for difficult terms
 key_words_dict = {'band members': 'has part', 'members': 'has part',
@@ -80,6 +81,9 @@ def syntacticAnalysis(nlp, line):
 
         if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
+
+    if settings.verbose:
+        print(keywords)
 
     return keywords
 

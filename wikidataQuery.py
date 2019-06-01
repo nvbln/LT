@@ -1,5 +1,6 @@
 # Functions needed for making queries for WikiData
 import requests
+import settings
 
 def makeQuery(keywords):
     property_id = None
@@ -24,7 +25,10 @@ def searchEntity(entity, string_type):
     json = requests.get(url,params).json()
     
     # Return the most likely entity
-    return json['search'][0]['id']
+    if len(json['search']) > 0:
+        if settings.verbose:
+            print(json['search'][0]['id'])
+        return json['search'][0]['id']
 
 # Creates a query and returns the answer(s) on that query.
 def submitQuery(entity_id, property_id):
