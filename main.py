@@ -36,7 +36,7 @@ def evaluateTestQuestions():
             if isinstance(answer, list):
                 correct = True
                 for i in range(len(answer)):
-                    if answer[i].lower() != line[i + 2].lower():
+                    if len(line) > i + 2 and answer[i].lower() != line[i + 2].lower():
                         correct = False
                 if correct:
                     total_correct += 1
