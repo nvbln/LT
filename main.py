@@ -43,9 +43,11 @@ def evaluateTestQuestions():
             
             current_correct = total_correct
 
+
             if len(answer) > 1:
                 correct = True
                 for i in range(len(answer)):
+                    line[i + 2] = line[i + 2].strip()
                     if len(line) > i + 2 and answer[i].lower() != line[i + 2].lower():
                         correct = False
                 if correct:
@@ -54,6 +56,7 @@ def evaluateTestQuestions():
                     total_incorrect += 1
             elif len(answer) > 0:
                 answer = answer[0]
+                line[2] = line[2].strip()
                 if answer.lower() == line[2].lower():
                     total_correct += 1
                 else:
