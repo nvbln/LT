@@ -43,7 +43,7 @@ def evaluateTestQuestions():
             
             current_correct = total_correct
 
-            if isinstance(answer, list):
+            if len(answer) > 1:
                 correct = True
                 for i in range(len(answer)):
                     if len(line) > i + 2 and answer[i].lower() != line[i + 2].lower():
@@ -52,14 +52,18 @@ def evaluateTestQuestions():
                     total_correct += 1
                 else:
                     total_incorrect += 1
-            else:
+            elif len(answer) > 0:
+                answer = answer[0]
                 if answer.lower() == line[2].lower():
                     total_correct += 1
                 else:
                     total_incorrect += 1
+            else:
+                # No answer is available.
+                total_incorrect += 1
 
             if local_verbose:
-                print("") # Necessary newline due to line 61.
+                print("") # Necessary newline due to line 71.
                 if current_correct == total_correct:
                     print("Incorrect: " + line[0])
                 else:
