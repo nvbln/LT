@@ -44,16 +44,19 @@ def evaluateTestQuestions():
             current_correct = total_correct
 
             if local_verbose:
-                print("") # Necessary newline due to line 71.
+                print("") # Necessary newline due to line 84.
                 print("Given answers vs actual answer:")
 
             if len(answer) > 1:
                 correct = True
                 for i in range(len(answer)):
-                    line[i + 2] = line[i + 2].strip()
-                    if local_verbose:
-                        print(answer[i].lower() + " vs " + line[i + 2].lower())
-                    if len(line) > i + 2 and answer[i].lower() != line[i + 2].lower():
+                    if len(line) > i + 2:
+                        line[i + 2] = line[i + 2].strip()
+                        if local_verbose:
+                            print(answer[i].lower() + " vs " + line[i + 2].lower())
+                        if answer[i].lower() != line[i + 2].lower():
+                            correct = False
+                    else:
                         correct = False
                 if correct:
                     total_correct += 1
