@@ -43,23 +43,40 @@ def evaluateTestQuestions():
             
             current_correct = total_correct
 
-            if isinstance(answer, list):
+            if local_verbose:
+                print("") # Necessary newline due to line 84.
+                print("Given answers vs actual answer:")
+
+            if len(answer) > 1:
                 correct = True
                 for i in range(len(answer)):
-                    if len(line) > i + 2 and answer[i].lower() != line[i + 2].lower():
+                    if len(line) > i + 2:
+                        line[i + 2] = line[i + 2].strip()
+                        if local_verbose:
+                            print(answer[i].lower() + " vs " + line[i + 2].lower())
+                        if answer[i].lower() != line[i + 2].lower():
+                            correct = False
+                    else:
                         correct = False
                 if correct:
                     total_correct += 1
                 else:
                     total_incorrect += 1
-            else:
+            elif len(answer) > 0:
+                answer = answer[0]
+                line[2] = line[2].strip()
+                if local_verbose:
+                    print(answer.lower() +  " vs " + line[2].lower())
                 if answer.lower() == line[2].lower():
                     total_correct += 1
                 else:
                     total_incorrect += 1
+            else:
+                # No answer is available.
+                print("No answer was given.")
+                total_incorrect += 1
 
             if local_verbose:
-                print("") # Necessary newline due to line 61.
                 if current_correct == total_correct:
                     print("Incorrect: " + line[0])
                 else:
