@@ -58,7 +58,7 @@ def syntacticAnalysis(nlp, line):
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
         if settings.verbose:
-            print("What did Y [verb] question.")
+            print("What X did Y [verb] question.")
         keywords.append((getPhrase(question, dobj_pos), "property"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
 
