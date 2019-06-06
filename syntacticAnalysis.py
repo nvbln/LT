@@ -37,7 +37,7 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, pobj_pos), "specification"))
     elif (root_pos > 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
-            and pobj_pos > root_pos):
+            and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
         # Likely an X of Y question.
         if settings.verbose:
             print("X of Y question.")
