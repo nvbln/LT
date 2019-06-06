@@ -36,6 +36,11 @@ def syntacticAnalysis(nlp, line):
         keywords.append((getPhrase(question, advmod_pos), "question_word"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, root_pos), "property"))
+
+        # Add further specification if available.
+        # TODO: See if this is possible for other questions as well.
+        if prep_pos > nsubj_pos and pobj_pos > prep_pos:
+            keywords.append((getPhrase(question, pobj_pos), "specification"))
     elif (root_pos > 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos):
