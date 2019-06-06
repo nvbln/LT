@@ -70,8 +70,7 @@ def syntacticAnalysis(nlp, line):
         if attr_pos != -1:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
     elif (root_pos != -1 and poss_pos > root_pos
-            and case_pos > poss_pos 
-            and sentenceContains(question, "attr", case_pos) > case_pos):
+            and case_pos > poss_pos):
         # Likely an X's Y question.
         if settings.verbose:
             print("X's Y question.")
@@ -82,6 +81,15 @@ def syntacticAnalysis(nlp, line):
             secondAttribute = sentenceContains(question, "attr", case_pos)
             if secondAttribute != -1:
                 keywords.append((getPhrase(question, secondAttribute), "property"))
+            else:
+                # A second attribute could not be found.
+                # Likely a construction like 'X of Y' is present.
+                # TODO: Make a cleaner version of this.
+                phrase = ""
+                for i in range(len(question)):
+                    if i > case_pos and question[i].dep_ != "punct":
+                        phrase += question[i].text + " "
+                keywords.append((phrase.strip(), "property"))
 
         elif attr_pos > case_pos:
             keywords.append((getPhrase(question, attr_pos), "property"))
