@@ -13,6 +13,7 @@ def syntacticAnalysis(nlp, line):
     aux_pos = sentenceContains(question, "aux", 0)
     attr_pos = sentenceContains(question, "attr", 0)
     case_pos = sentenceContains(question, "case", 0)
+    det_pos = sentenceContains(question, "det", 0)
     dobj_pos = sentenceContains(question, "dobj", 0)
     nsubj_pos = sentenceContains(question, "nsubj", 0)
     pobj_pos = sentenceContains(question, "pobj", 0)
@@ -98,11 +99,11 @@ def syntacticAnalysis(nlp, line):
 
         if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
-    elif (prep_pos != -1 and nsubj_pos > prep_pos and root_pos > nsubj_pos 
+    elif (det_pos != -1 and nsubj_pos > det_pos and root_pos > nsubj_pos 
             and attr_pos > root_pos):
-        # Likely a [Prep] X is Y question.
+        # Likely a [Det] X is Y question.
         if settings.verbose:
-            print("[Prep] X is Y question.")
+            print("[Det] X is Y question.")
 
         keywords.append((getPhrase(question, nsubj_pos), "property"))
         keywords.append((getPhrase(question, attr_pos), "entity"))
