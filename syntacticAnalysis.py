@@ -111,6 +111,21 @@ def syntacticAnalysis(nlp, line):
         # TODO: Put this tag up for discussion.
         # Back-up property:
         keywords.append(("part of", "property_backup"))
+    elif nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
+        # Likely a '(remind me,) X was Y of what again?' question type.
+        # TODO: Take into account that is can also likely be a yes/no
+        # question. E.g. X was the Y of Z (right?)
+
+        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        keywords.append((getPhrase(question, attr_pos), "property"))
+        # TODO: Make a cleaner version of this.
+        phrase = ""
+        for i in range(len(question)):
+            # TODO: Change 'which' to question word.
+            if (prep_pos != -1 and i > prep_pos and question[i].dep_ != "punct"
+                    and question[i].text != 'which'):
+                phrase += question[i].text + " "
+        keywords.append((phrase.strip(), "specification"))
 
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
