@@ -98,10 +98,10 @@ def syntacticAnalysis(nlp, line):
         # Likely a What X [verb] Y question.
         if settings.verbose:
             print("What X [verb] Y question.")
-        # TODO: Discuss whether we should also append the verb.
 
         keywords.append((getPhrase(question, nsubj_pos), "property"))
         keywords.append((getPhrase(question, dobj_pos), "entity"))
+        keywords.append((getPhrase(question, root_pos), "root"))
 
         if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
