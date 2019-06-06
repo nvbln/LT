@@ -31,6 +31,8 @@ def syntacticAnalysis(nlp, line):
     # Check if the order of dependencies is correct.
     if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
         # Likely a When/what/who is/are/did X [verb] question.
+        if settings.verbose:
+            print("When/what/who is/are/did X [verb] question.")
         keywords.append((getPhrase(question, advmod_pos), "question_word"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, root_pos), "property"))
@@ -38,6 +40,8 @@ def syntacticAnalysis(nlp, line):
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos):
         # Likely an X of Y question.
+        if settings.verbose:
+            print("X of Y question.")
         keywords.append((getPhrase(question, pobj_pos), "entity"))
 
         secondAttribute = sentenceContains(question, "attr", root_pos)
@@ -52,7 +56,9 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, attr_pos), "question_word"))
     elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
-        # Likely a What X did Y [verb]?
+        # Likely a What X did Y [verb] question.
+        if settings.verbose:
+            print("What X did Y [verb] question.")
         keywords.append((getPhrase(question, dobj_pos), "property"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
 
@@ -62,6 +68,8 @@ def syntacticAnalysis(nlp, line):
             and case_pos > poss_pos 
             and sentenceContains(question, "attr", case_pos) > case_pos):
         # Likely an X's Y question.
+        if settings.verbose:
+            print("X's Y question.")
         keywords.append((getPhrase(question, poss_pos), "entity"))
 
         if attr_pos == 0:
@@ -74,6 +82,8 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, attr_pos), "property"))
     elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
+        if settings.verbose:
+            print("What X [verb] Y question.")
         # TODO: Discuss whether we should also append the verb.
 
         keywords.append((getPhrase(question, nsubj_pos), "property"))
