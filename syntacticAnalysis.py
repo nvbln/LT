@@ -52,7 +52,7 @@ def syntacticAnalysis(nlp, line):
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
         if settings.verbose:
-            print("What did Y [verb] question.")
+            print("What X did Y [verb] question.")
         keywords.append((getPhrase(question, dobj_pos), "property"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
 
@@ -85,6 +85,18 @@ def syntacticAnalysis(nlp, line):
 
         if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
+    elif (prep_pos != -1 and nsubj_pos > prep_pos and root_pos > nsubj_pos 
+            and attr_pos > root_pos):
+        # Likely a [Prep] X is Y question.
+        if settings.verbose:
+            print("[Prep] X is Y question.")
+
+        keywords.append((getPhrase(question, nsubj_pos), "property"))
+        keywords.append((getPhrase(question, attr_pos), "entity"))
+
+        # TODO: Put this tag up for discussion.
+        # Back-up property:
+        keywords.append(("part of", "property_backup"))
 
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
