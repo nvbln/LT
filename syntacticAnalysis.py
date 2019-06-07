@@ -126,7 +126,6 @@ def syntacticAnalysis(nlp, line):
                     and question[i].text != 'which'):
                 phrase += question[i].text + " "
         keywords.append((phrase.strip(), "specification"))
-
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
         if aux_pos == 0:
@@ -137,7 +136,7 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, root_pos), "question_word"))
             
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
-
+        
     if settings.verbose:
         print(keywords)
 
