@@ -57,8 +57,8 @@ def searchEntity(entity, string_type):
 
     params['search'] = entity.rstrip()
     json = requests.get(url,params).json()
-    
-    print(entity, '->', json['search'][0]['label'])
+    if settings.verbose:
+        print(entity, '->', json['search'][0]['label'])
     
     # Return the most likely entity
     if len(json['search']) > 0:
@@ -104,5 +104,4 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
         answer = ['Yes']
     else:
         answer = ['No']
-    
-return answer
+    return answer
