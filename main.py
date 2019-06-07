@@ -73,7 +73,8 @@ def evaluateTestQuestions():
                     total_incorrect += 1
             else:
                 # No answer is available.
-                print("No answer was given.")
+                if local_verbose:
+                    print("No answer was given.")
                 total_incorrect += 1
 
             if local_verbose:
