@@ -63,8 +63,8 @@ def evaluateTestQuestions(test_choice):
                 for x in line:
                      if x != "":
                          lineLength += 1
-					
-            if len(answer) > 1:
+
+            if answer != None and len(answer) > 1:
                 correct = True
                 for i in range(len(answer)):
                     if lineLength > i + 2:
@@ -79,7 +79,7 @@ def evaluateTestQuestions(test_choice):
                     total_correct += 1
                 else:
                     total_incorrect += 1
-            elif len(answer) > 0:
+            elif answer != None and len(answer) > 0:
                 answer = answer[0]
                 line[2] = line[2].strip()
                 if local_verbose:
