@@ -55,7 +55,9 @@ def makeQuery(keywords):
         
     elif query_type == 'person':
         answer = submitTypeQuery(entity_id, properties_id, 'person')
-    #elif query_type == 'cause':
+    elif query_type == 'cause':
+        answer = submitTypeQuery(entity_id, properties_id, 'cause')
+    # TODO extract how many questions properly
     #elif query_type == 'count':
 
     return answer
@@ -184,6 +186,19 @@ query_dict = {
           ?wd wikibase:statementProperty ?ps.
           ?ps_ wdt:P31 wd:Q5.
         
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}''',
+    'cause':'''
+        SELECT ?wd ?ps_Label{{
+          VALUES (?entity) {{(wd:{0})}}
+        
+          ?entity ?p ?statement .
+          ?statement ?ps ?ps_ .
+        
+          ?wd wikibase:statementProperty ?ps.
+          ?wd wdt:P1629 ?cause_type.
+          ?cause_type wdt:P279 wd:Q179289.
+          
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
         }}'''
     }
