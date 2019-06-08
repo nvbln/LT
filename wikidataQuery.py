@@ -10,7 +10,7 @@ property_dict = {'band members': 'has part', 'members': 'has part',
                   'play': 'instrument'}
 
 # List of w-words, feel free to add any words I forgot
-w_words_dict = {'What':'basic', 'Who':'basic', 'When':'date', 'Where':'place',
+w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
                 'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
 
 def makeQuery(keywords):
@@ -49,6 +49,9 @@ def makeQuery(keywords):
         
     elif query_type == 'place':
         answer = submitPlaceQuery(entity_id, properties_id)
+        
+    elif query_type == 'person':
+        answer = submitPersonQuery(entity_id, properties_id)
     #elif query_type == 'cause':
     #elif query_type == 'count':
 
@@ -183,4 +186,32 @@ def submitPlaceQuery(entity_id, properties_id):
             if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = prop_id['id']
+    return answers
+
+def submitPersonQuery(entity_id, properties_id):
+    url = 'https://query.wikidata.org/sparql'
+    query = '''
+        SELECT ?wd ?ps_Label{{
+          VALUES (?entity) {{(wd:{0})}}
+        
+          ?entity ?p ?statement .
+          ?statement ?ps ?ps_ .
+        
+          ?wd wikibase:statementProperty ?ps.
+          ?ps_ wdt:P31 wd:Q5.
+        
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}
+    '''.format(entity_id)
+    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    
+    answers = []
+    chosen_property = None
+    for prop_id in properties_id:
+        for item in data['results']['bindings']:
+            if (chosen_property != None and item['wd']['value'] != chosen_property):
+                continue
+            if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
+                answers.append(item['ps_Label']['value'])
+                chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
     return answers
