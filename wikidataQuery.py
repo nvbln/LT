@@ -10,26 +10,25 @@ property_dict = {'band members': 'has part', 'members': 'has part',
                   'play': 'instrument'}
 
 # List of w-words, feel free to add any words I forgot
-w_words_list = ['What', 'Who', 'When', 'Where', 'Why', 'How', 'Which']
+w_words_dict = {'What':'basic', 'Who':'basic', 'When':'date', 'Where':'place',
+                'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
 
 def makeQuery(keywords):
     property_id = None
     entity_id = None
     prop_attribute_id = None
+    properties_id = None
     
     query_type = None
 
     for keyword in keywords:
         if keyword[1] == "question_word":
-            if keyword[0] in w_words_list:
-                #TODO update property & possibly query based on that
-                query_type = 'basic'
-            else:
-                query_type = 'yes/no' 
+            query_type = w_words_dict.get(keyword[0], 'yes/no')
                 
         elif keyword[1] == "property":
             prop = property_dict.get(keyword[0], keyword[0])
-            property_id = searchEntity(prop, "property")
+            properties_id = searchEntities(prop, "property")
+            property_id = properties_id[0]['id']
             
         elif keyword[1] == "entity":
             entity_id = searchEntity(keyword[0], "entity")
@@ -44,6 +43,13 @@ def makeQuery(keywords):
         answer = submitQuery(entity_id, property_id)
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
+    # TODO make query for each type
+    elif query_type == 'date':
+        answer = submitDateQuery(entity_id, properties_id)
+        
+    #elif query_type == 'place':
+    #elif query_type == 'cause':
+    #elif query_type == 'count':
 
     return answer
 
@@ -65,6 +71,20 @@ def searchEntity(entity, string_type):
         if settings.verbose:
             print(json['search'][0]['id'])
         return json['search'][0]['id']
+
+def searchEntities(entity, string_type):
+    url = 'https://www.wikidata.org/w/api.php'
+    if string_type != 'entity':
+        url = url + '?type=' + string_type
+    params = {'action':'wbsearchentities',
+              'language':'en',
+              'format':'json'}
+
+    params['search'] = entity.rstrip()
+    json = requests.get(url,params).json()
+    
+    # Return all the entities
+    return json['search']
 
 # Creates a query and returns the answer(s) on that query.
 def submitQuery(entity_id, property_id):
@@ -105,3 +125,31 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
     else:
         answer = ['No']
     return answer
+
+def submitDateQuery(entity_id, properties_id):
+    url = 'https://query.wikidata.org/sparql'
+    query = '''
+        SELECT ?wd ?ps_Label{{
+        VALUES (?entity) {{(wd:{0})}}
+        
+        ?entity ?p ?statement .
+        ?statement ?ps ?ps_ .
+        
+        ?wd wikibase:statementProperty ?ps.
+        FILTER(DATATYPE(?ps_) = xsd:dateTime).
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+    }}
+    '''.format(entity_id)
+    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    
+    answers = []
+    chosen_property = None
+    for prop_id in properties_id:
+        for item in data['results']['bindings']:
+            if (chosen_property != None and item['wd']['value'] != chosen_property):
+                continue
+            if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
+                answers.append(item['ps_Label']['value'])
+                chosen_property = prop_id['id']
+    return answers
