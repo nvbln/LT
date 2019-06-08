@@ -1,12 +1,6 @@
 # Functions needed for syntactic analysis
 import settings
 
-# A pre-defined dictionary for difficult terms
-key_words_dict = {'band members': 'has part', 'members': 'has part',
-                  'member': 'has part', 'band member': 'has part',
-                  'founding year': 'inception', 'bandmember': 'has part',
-                  'bandmembers': 'has part', 'founding': 'inception'}
-
 def syntacticAnalysis(nlp, line):
     question = nlp(line)
 
@@ -132,7 +126,17 @@ def syntacticAnalysis(nlp, line):
                     and question[i].text != 'which'):
                 phrase += question[i].text + " "
         keywords.append((phrase.strip(), "specification"))
-
+    elif root_pos == 0 or aux_pos == 0:
+        # Likely a yes/no question
+        if aux_pos == 0:
+            keywords.append((getPhrase(question, aux_pos), "question_word"))
+            keywords.append((getPhrase(question, root_pos), "property"))
+            keywords.append((getPhrase(question, pobj_pos), "property_attribute"))
+        elif root_pos == 0:
+            keywords.append((getPhrase(question, root_pos), "question_word"))
+            
+        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        
     if settings.verbose:
         print(keywords)
 
