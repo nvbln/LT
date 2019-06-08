@@ -135,6 +135,8 @@ def syntacticAnalysis(nlp, line):
         keywords.append((phrase.strip(), "specification"))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
+        keywords.append((7, "question_id"))
+
         if aux_pos == 0:
             keywords.append((getPhrase(question, aux_pos), "question_word"))
             keywords.append((getPhrase(question, root_pos), "property"))
