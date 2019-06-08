@@ -46,8 +46,12 @@ def syntacticAnalysis(nlp, line):
 
                 keywords.append(("date1", date1_match[0]))
                 keywords.append(("date2", date2_match[0]))
-                keywords.append(("date1_source", date1_match[1]))
-                keywords.append(("date2_source", date2_match[1]))
+
+                date1_source = date1[date1_match[1][0]:date1_match[1][1]]
+                date2_source = date2[date2_match[1][0]:date2_match[1][1]]
+
+                keywords.append(("date1_source", date1_source))
+                keywords.append(("date2_source", date2_source))
 
                 if len(list(datefinder.find_dates(date1, strict=True))) == 1:
                     keywords.append(("date1_strict", True))
@@ -75,7 +79,9 @@ def syntacticAnalysis(nlp, line):
                 date_match = date_match[0]
 
                 keywords.append(("date1", date_match[0]))
-                keywords.append(("date1_source", date_match[1]))
+
+                date_source = date[date_match[1][0]:date_match[1][1]]
+                keywords.append(("date1_source", date_source))
                 
                 if len(list(datefinder.find_dates(date, strict=True))) == 1:
                     keywords.append(("date1_strict", True))
