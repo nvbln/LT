@@ -40,7 +40,7 @@ def makeQuery(keywords):
             # TODO attribute is not always entity, right? needs to be fixed
             prop_attribute_id = searchEntity(keyword[0], "entity")
             
-    answer = None
+    answer = []
     
     if query_type == 'basic':
         answer = submitQuery(entity_id, property_id)
@@ -72,14 +72,14 @@ def searchEntity(entity, string_type):
 
     params['search'] = entity.rstrip()
     json = requests.get(url,params).json()
-    if settings.verbose:
-        print(entity, '->', json['search'][0]['label'])
     
     # Return the most likely entity
     if len(json['search']) > 0:
-        if settings.verbose:
-            print(json['search'][0]['id'])
-        return json['search'][0]['id']
+         if settings.verbose:
+             print(entity + '->' + json['search'][0]['label'])
+         if settings.verbose:
+             print(json['search'][0]['id'])
+         return json['search'][0]['id']
 
 def searchEntities(entity, string_type):
     url = 'https://www.wikidata.org/w/api.php'

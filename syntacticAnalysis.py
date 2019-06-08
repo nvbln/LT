@@ -1,13 +1,112 @@
 # Functions needed for syntactic analysis
 import settings
+import datefinder
+from nltk.corpus import wordnet as wn
+ 
+# Static variables for the convertPOS-function
+WN_NOUN = 'n'
+WN_VERB = 'v'
+WN_ADJECTIVE = 'a'
+WN_ADJECTIVE_SATELLITE = 's'
+WN_ADVERB = 'r'
 
 def syntacticAnalysis(nlp, line):
     question = nlp(line)
 
     keywords = []
 
+    # Check if the sentence contains a date (and remove it).
+    # TODO: Clean up code.
+    # TODO: Check if the date is not between puncts. This likely means that
+    # we are dealing with names.
+    # TODO: The datefinder tries to fill in the gaps by itself.
+    # I.e. for '1999' it will return '1999-06-08' (which is today 20 years ago).
+    # There is the strict option. So we should exploit that and report whether
+    # the datefinder filled in gaps. Then we can ignore everything that is
+    # the same date/time as at the moment of the extraction.
+    prep_pos = sentenceContains(question, "prep", 0)
+    if prep_pos != -1:
+        # Get the latest prep.
+        latest_prep_pos = prep_pos
+        current_prep_pos = sentenceContains(question, "prep", latest_prep_pos + 1)
+        while (current_prep_pos != -1):
+           latest_prep_pos = current_prep_pos 
+           current_prep_pos = sentenceContains(question, "prep", latest_prep_pos + 1)
+
+        if question[latest_prep_pos].text == "between":
+            # There should be two dates.
+            cc_pos = sentenceContains(question, "cc", latest_prep_pos)
+            date1 = getPhraseUntil(question, latest_prep_pos + 1, cc_pos)
+            print(date1)
+            date2 = getPhraseUntil(question, cc_pos + 1, 99999)
+            print(date2)
+
+            # See if datefinder can exfiltrate them.
+            if (len(list(datefinder.find_dates(date1))) == 1
+                    and len(list(datefinder.find_dates(date2))) == 1):
+                # Dates successfully extracted. Add them to the keywords.
+                keywords.append(("date_word", "between"))
+
+                date1_match = list(datefinder.find_dates(date1, index=True))
+                date1_match = date1_match[0]
+                date2_match = list(datefinder.find_dates(date2, index=True))
+                date2_match = date2_match[0]
+
+                keywords.append(("date1", date1_match[0]))
+                keywords.append(("date2", date2_match[0]))
+
+                date1_source = date1[date1_match[1][0]:date1_match[1][1]]
+                date2_source = date2[date2_match[1][0]:date2_match[1][1]]
+
+                keywords.append(("date1_source", date1_source))
+                keywords.append(("date2_source", date2_source))
+
+                if len(list(datefinder.find_dates(date1, strict=True))) == 1:
+                    keywords.append(("date1_strict", True))
+                else:
+                    keywords.append(("date1_strict", False))
+
+                if len(list(datefinder.find_dates(date2, strict=True))) == 1:
+                    keywords.append(("date2_strict", True))
+                else:
+                    keywords.append(("date2_strict", False))
+
+                # Remove phrase from the question.
+                # Also remove the space
+                new_line = line[:question[latest_prep_pos].idx - 1]
+                new_line += "?"
+                question = nlp(new_line)
+
+        else:
+            date = getPhraseUntil(question, latest_prep_pos + 1, 99999)
+            if len(list(datefinder.find_dates(date))) == 1:
+                # A date has been found.
+                keywords.append(("date_word", question[latest_prep_pos].text))
+
+                date_match = list(datefinder.find_dates(date, index=True))
+                date_match = date_match[0]
+
+                keywords.append(("date1", date_match[0]))
+
+                date_source = date[date_match[1][0]:date_match[1][1]]
+                keywords.append(("date1_source", date_source))
+                
+                if len(list(datefinder.find_dates(date, strict=True))) == 1:
+                    keywords.append(("date1_strict", True))
+                else:
+                    keywords.append(("date1_strict", False))
+
+                # Remove phrase from the question.
+                # Also remove the space
+                new_line = line[:question[latest_prep_pos].idx - 1] 
+                new_line += "?"
+                question = nlp(new_line)
+
+    if settings.verbose:
+        print("Question after date removal:")
+        print(question)
+
     # Check for all syntactic dependencies
-    # Skip the first word as it is likely a question word.
     advmod_pos = sentenceContains(question, "advmod", 0)
     auxpass_pos = sentenceContains(question, "auxpass", 0)
     aux_pos = sentenceContains(question, "aux", 0)
@@ -83,12 +182,10 @@ def syntacticAnalysis(nlp, line):
             else:
                 # A second attribute could not be found.
                 # Likely a construction like 'X of Y' is present.
-                # TODO: Make a cleaner version of this.
-                phrase = ""
-                for i in range(len(question)):
-                    if i > case_pos and question[i].dep_ != "punct":
-                        phrase += question[i].text + " "
-                keywords.append((phrase.strip(), "property"))
+                # 9999 means to go on until a punctuation is encountered.
+                # This should probably be changed once we implement checking for dates
+                # and such which are often at the end of a sentence.
+                keywords.append((getPhraseUntil(question, prep_pos + 1, 9999), "specification"))
 
         elif attr_pos > case_pos:
             keywords.append((getPhrase(question, attr_pos), "property"))
@@ -125,14 +222,13 @@ def syntacticAnalysis(nlp, line):
 
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, attr_pos), "property"))
-        # TODO: Make a cleaner version of this.
-        phrase = ""
-        for i in range(len(question)):
-            # TODO: Change 'which' to question word.
-            if (prep_pos != -1 and i > prep_pos and question[i].dep_ != "punct"
-                    and question[i].text != 'which'):
-                phrase += question[i].text + " "
-        keywords.append((phrase.strip(), "specification"))
+
+        # TODO: Change 'which' to question word.
+        if question[prep_pos + 1].text == 'which':
+            # 9999 means to go on until a punctuation is encountered.
+            # This should probably be changed once we implement checking for dates
+            # and such which are often at the end of a sentence.
+            keywords.append((getPhraseUntil(question, prep_pos + 2, 9999), "specification"))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
         keywords.append((7, "question_id"))
@@ -168,6 +264,15 @@ def getPhrase(sentence, position):
 
     return phrase + word.text
 
+def getPhraseUntil(sentence, start_position, end_position):
+    phrase = ""
+    position = start_position
+    while (position < end_position and position < len(sentence) 
+            and sentence[position].dep_ != "punct"):
+        phrase += sentence[position].text + " "
+        position += 1
+    return phrase.strip()
+
 def sentenceContains(sentence, keyword, start_position):
     # Return the position of the first encounter
     # with the requested keyword from the start_position.
@@ -179,3 +284,45 @@ def sentenceContains(sentence, keyword, start_position):
 
     # The keyword could not be found.
     return -1
+
+# Converts a word string from POS to another POS, using WordNet
+# WN_NOUN: noun
+# WN_VERB: verb
+# WN_ADJECTIVE: adjective
+# WN_ADJECTIVE_SATELLITE: ?
+# WN_ADVERB: adverb
+def convertPOS(word, from_pos, to_pos):
+    synsets = wn.synsets(word, pos=from_pos)
+ 
+    # Word not found
+    if not synsets:
+        return []
+ 
+    # Get all lemmas of the word (consider 'a'and 's' equivalent)
+    lemmas = [l for s in synsets
+                for l in s.lemmas() 
+                if s.name().split('.')[1] == from_pos
+                    or from_pos in (WN_ADJECTIVE, WN_ADJECTIVE_SATELLITE)
+                        and s.name().split('.')[1] in (WN_ADJECTIVE, WN_ADJECTIVE_SATELLITE)]
+ 
+    # Get related forms
+    derivationally_related_forms = [(l, l.derivationally_related_forms()) for l in lemmas]
+ 
+    # filter only the desired pos (consider 'a' and 's' equivalent)
+    related_noun_lemmas = [l for drf in derivationally_related_forms
+                             for l in drf[1] 
+                             if l.synset().name().split('.')[1] == to_pos
+                                or to_pos in (WN_ADJECTIVE, WN_ADJECTIVE_SATELLITE)
+                                    and l.synset().name().split('.')[1] in (WN_ADJECTIVE, WN_ADJECTIVE_SATELLITE)]
+ 
+    # Extract the words from the lemmas
+    words = [l.name() for l in related_noun_lemmas]
+    len_words = len(words)
+ 
+    # Build the result in the form of a list containing tuples (word, probability)
+    result = [(w, float(words.count(w))/len_words) for w in set(words)]
+    result.sort(key=lambda w: -w[1])
+ 
+    # return all the possibilities sorted by probability
+    # for each element e in result, e[0] gives the name and e[1] gives the probability
+    return result
