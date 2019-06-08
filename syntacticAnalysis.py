@@ -26,6 +26,7 @@ def syntacticAnalysis(nlp, line):
     # Check if the order of dependencies is correct.
     if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
         # Likely a When/what/who is/are/did X [verb] question.
+        keywords.append((1, "question_id"))
         if settings.verbose:
             print("When/what/who is/are/did X [verb] question.")
         keywords.append((getPhrase(question, advmod_pos), "question_word"))
@@ -40,6 +41,7 @@ def syntacticAnalysis(nlp, line):
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
         # Likely an X of Y question.
+        keywords.append((2, "question_id"))
         if settings.verbose:
             print("X of Y question.")
         keywords.append((getPhrase(question, pobj_pos), "entity"))
@@ -57,6 +59,7 @@ def syntacticAnalysis(nlp, line):
     elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
+        keywords.append((3, "question_id"))
         if settings.verbose:
             print("What X did Y [verb] question.")
         keywords.append((getPhrase(question, dobj_pos), "property"))
@@ -67,6 +70,7 @@ def syntacticAnalysis(nlp, line):
     elif (root_pos != -1 and poss_pos > root_pos
             and case_pos > poss_pos):
         # Likely an X's Y question.
+        keywords.append((4, "question_id"))
         if settings.verbose:
             print("X's Y question.")
         keywords.append((getPhrase(question, poss_pos), "entity"))
@@ -90,6 +94,7 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, attr_pos), "property"))
     elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
+        keywords.append((5, "question_id"))
         if settings.verbose:
             print("What X [verb] Y question.")
 
@@ -102,6 +107,7 @@ def syntacticAnalysis(nlp, line):
     elif (det_pos != -1 and nsubj_pos > det_pos and root_pos > nsubj_pos 
             and attr_pos > root_pos):
         # Likely a [Det] X is Y question.
+        keywords.append((6, "question_id"))
         if settings.verbose:
             print("[Det] X is Y question.")
 
@@ -115,6 +121,7 @@ def syntacticAnalysis(nlp, line):
         # Likely a '(remind me,) X was Y of what again?' question type.
         # TODO: Take into account that is can also likely be a yes/no
         # question. E.g. X was the Y of Z (right?)
+        keywords.append((7, "question_id"))
 
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, attr_pos), "property"))
