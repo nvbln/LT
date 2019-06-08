@@ -10,6 +10,7 @@ def printHelp():
     print("Available arguments:")
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
+    print("-a, --atest		Evaluates the program based on the adjusted test questions.")
     print("-w, --wrapper    Does not load NLP.")
     print("-v, --verbose    Verbose mode. Prints debugging messages about it's progress.")
 
@@ -89,6 +90,80 @@ def evaluateTestQuestions():
         print("Percentage of correct answers: " 
               + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
 
+def evaluateAdjustedTestQuestions():
+    local_verbose = False
+    if settings.verbose:
+        print("Loading SpaCy library...")
+
+        # When combining test and verbose, only use verbose locally.
+        local_verbose = True
+        settings.verbose = False
+    nlp = spacy.load('en_core_web_md')
+
+    with open("qa_v2.csv") as tsvfile:
+        tsvreader = csv.reader(tsvfile, delimiter=";")
+
+        total_correct = 0
+        total_incorrect = 0
+        total_lines = sum(1 for row in tsvreader)
+        tsvfile.seek(0)
+        for line in tsvreader:
+            # Get the answer
+            answer = evaluateQuestion(nlp, line[0]) 
+            
+            current_correct = total_correct
+
+            if local_verbose:
+                print("") # Necessary newline due to line 84.
+                print("Given answers vs actual answer:")
+			
+            lineLength = 0
+            for x in line:
+                if x != "":
+                    lineLength += 1
+					
+            if len(answer) > 1:
+                correct = True
+                for i in range(len(answer)):
+                    if lineLength > i + 2:
+                        line[i + 2] = line[i + 2].strip()
+                        if local_verbose:
+                            print(answer[i].lower() + " vs " + line[i + 2].lower())
+                        if answer[i].lower() != line[i + 2].lower():
+                            correct = False
+                    else:
+                        correct = False
+                if correct:
+                    total_correct += 1
+                else:
+                    total_incorrect += 1
+            elif len(answer) > 0:
+                answer = answer[0]
+                line[2] = line[2].strip()
+                if local_verbose:
+                    print(answer.lower() +  " vs " + line[2].lower())
+                if answer.lower() == line[2].lower():
+                    total_correct += 1
+                else:
+                    total_incorrect += 1
+            else:
+                # No answer is available.
+                if local_verbose:
+                    print("No answer was given.")
+                total_incorrect += 1
+
+            if local_verbose:
+                if current_correct == total_correct:
+                    print("Incorrect: " + line[0])
+                else:
+                    print("Correct: " + line[0])
+            print("\rAnswered correctly: " + str(total_correct) + "/" 
+                    + str(total_lines) + ". Answered incorrectly: " 
+                    + str(total_incorrect) + "/" + str(total_lines), end="")
+
+        print("Percentage of correct answers: " 
+              + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
+
 def testQuestions():
     with open("qa_v2.csv") as tsvfile:
         tsvreader = csv.reader(tsvfile, delimiter=";")
@@ -103,6 +178,7 @@ def main(argv, nlp):
     # Do some necessary initialisation
     load_nlp = True
     test_questions = False
+    test_choice = -1
     settings.init()
 
     # Check commandline arguments
@@ -110,8 +186,8 @@ def main(argv, nlp):
     argument_list = full_cmd_arguments[1:]
     
     # Argument options: help, test
-    unix_options = "htwv"
-    gnu_options = ["help", "test", "wrapper", "verbose"]
+    unix_options = "htawv"
+    gnu_options = ["help", "test", "atest", "wrapper", "verbose"]
 
     try:
         arguments, values = getopt.getopt(argument_list, unix_options, gnu_options)
@@ -127,13 +203,20 @@ def main(argv, nlp):
             exit()
         elif current_argument in ("-t", "--test"):
             test_questions = True
+            test_choice = 0
+        elif current_argument in ("-a", "--atest"):
+            test_questions = True
+            test_choice = 1
         elif current_argument in ("-w", "--wrapper"):
             load_nlp = False        
         elif current_argument in ("-v", "--verbose"):
             settings.verbose = True 
 
     if test_questions:
-        evaluateTestQuestions()
+        if test_choice == 0:
+            evaluateTestQuestions()
+        if test_choice == 1:
+            evaluateAdjustedTestQuestions()
         exit()
 
     if load_nlp:
