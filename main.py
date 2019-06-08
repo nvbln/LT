@@ -90,13 +90,13 @@ def evaluateTestQuestions():
               + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
 
 def testQuestions():
-    with open("all_questions_and_answers.tsv") as tsvfile:
-        tsvreader = csv.reader(tsvfile, delimiter="\t")
+    with open("qa_v2.csv") as tsvfile:
+        tsvreader = csv.reader(tsvfile, delimiter=";")
         for line in tsvreader:
             for x in line:
-                if x == line[0]:
+                if x == line[0] and x != "":
                     print(x)
-                if x != line[0] and x != line[1]:
+                if x != line[0] and x != line[1] and x != "":
                     print(" - " + x)
 
 def main(argv, nlp):
@@ -141,7 +141,6 @@ def main(argv, nlp):
             print("Loading SpaCy library...")
         nlp = spacy.load('en_core_web_md')
 
-    # testQuestions()
     print("State a question:")
     for line in sys.stdin:
         line = line.rstrip()
