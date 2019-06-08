@@ -229,7 +229,6 @@ def syntacticAnalysis(nlp, line):
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
             keywords.append((getPhraseUntil(question, prep_pos + 2, 9999), "specification"))
-        keywords.append((phrase.strip(), "specification"))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
         keywords.append((7, "question_id"))
