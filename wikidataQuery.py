@@ -28,7 +28,10 @@ def makeQuery(keywords):
         elif keyword[1] == "property":
             prop = property_dict.get(keyword[0], keyword[0])
             properties_id = searchEntities(prop, "property")
-            property_id = properties_id[0]['id']
+            if len(properties_id) > 0:
+                property_id = properties_id[0]['id']
+            else:
+                property_id = []
             
         elif keyword[1] == "entity":
             entity_id = searchEntity(keyword[0], "entity")
