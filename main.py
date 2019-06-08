@@ -68,7 +68,7 @@ def evaluateTestQuestions(test_choice):
             # they aren't the same answers. Thus, the answer is incorrect.
             if lineLength - 2 != len(answer):
                 total_incorrect += 1
-			# There is more than 1 correct answer
+            # There is more than 1 correct answer
             elif len(answer) > 1:
                 correct = True
                 # Making 2 lists for both system and correct answers
@@ -77,7 +77,7 @@ def evaluateTestQuestions(test_choice):
                 for i in range(len(answer)):
                     systemAnswers.append(answer[i].lower())
                     correctAnswers.append(line[i + 2].lower().strip())
-				# Checking whether the lists are equal
+                # Checking whether the lists are equal
                 systemAnswers.sort()
                 correctAnswers.sort()
                 for i in range(len(answer)):
@@ -85,7 +85,7 @@ def evaluateTestQuestions(test_choice):
                         print(systemAnswers[i] + " vs " + correctAnswers[i])
                     if systemAnswers[i] != correctAnswers[i]:
                         correct = False
-				# Adding the correctness to the totals
+                # Adding the correctness to the totals
                 if correct:
                     total_correct += 1
                 else:
