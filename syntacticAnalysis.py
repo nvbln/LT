@@ -83,12 +83,10 @@ def syntacticAnalysis(nlp, line):
             else:
                 # A second attribute could not be found.
                 # Likely a construction like 'X of Y' is present.
-                # TODO: Make a cleaner version of this.
-                phrase = ""
-                for i in range(len(question)):
-                    if i > case_pos and question[i].dep_ != "punct":
-                        phrase += question[i].text + " "
-                keywords.append((phrase.strip(), "property"))
+                # 9999 means to go on until a punctuation is encountered.
+                # This should probably be changed once we implement checking for dates
+                # and such which are often at the end of a sentence.
+                keywords.append((getPhraseUntil(question, prep_pos + 1, 9999), "specification"))
 
         elif attr_pos > case_pos:
             keywords.append((getPhrase(question, attr_pos), "property"))
@@ -125,13 +123,13 @@ def syntacticAnalysis(nlp, line):
 
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, attr_pos), "property"))
-        # TODO: Make a cleaner version of this.
-        phrase = ""
-        for i in range(len(question)):
-            # TODO: Change 'which' to question word.
-            if (prep_pos != -1 and i > prep_pos and question[i].dep_ != "punct"
-                    and question[i].text != 'which'):
-                phrase += question[i].text + " "
+
+        # TODO: Change 'which' to question word.
+        if question[prep_pos + 1].text == 'which':
+            # 9999 means to go on until a punctuation is encountered.
+            # This should probably be changed once we implement checking for dates
+            # and such which are often at the end of a sentence.
+            keywords.append((getPhraseUntil(question, prep_pos + 2, 9999), "specification"))
         keywords.append((phrase.strip(), "specification"))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
@@ -167,6 +165,14 @@ def getPhrase(sentence, position):
         position -= 1
 
     return phrase + word.text
+
+def getPhraseUntil(sentence, start_position, end_position):
+    phrase = ""
+    position = start_position
+    while position < end_position and sentence[position].dep_ != "punct":
+        phrase += sentence[position].text + " "
+        position += 1
+    return phrase.strip()
 
 def sentenceContains(sentence, keyword, start_position):
     # Return the position of the first encounter
