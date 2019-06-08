@@ -3,7 +3,7 @@ Hi! This system has been developed as a project for the RUG course Language Tech
 The following people have been part of this development:
 - Nathan van Beelen (s...)
 - Kevin Kelly (s...)
-- Galina Lesnic (s...)
+- Galina Lesnic (s3367398)
 - Tom Veldhuis (s3451771)
 ## Requirements for running this system:
 - Python3 (and pip3)
