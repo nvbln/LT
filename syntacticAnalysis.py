@@ -267,7 +267,8 @@ def getPhrase(sentence, position):
 def getPhraseUntil(sentence, start_position, end_position):
     phrase = ""
     position = start_position
-    while position < end_position and sentence[position].dep_ != "punct":
+    while (position < end_position and position < len(sentence) 
+            and sentence[position].dep_ != "punct"):
         phrase += sentence[position].text + " "
         position += 1
     return phrase.strip()
