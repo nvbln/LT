@@ -21,7 +21,7 @@ def evaluateQuestion(nlp, line):
     # Test keywords
     return q.makeQuery(keywords)
 
-def evaluateTestQuestions():
+def evaluateTestQuestions(test_choice):
     local_verbose = False
     if settings.verbose:
         print("Loading SpaCy library...")
@@ -30,84 +30,23 @@ def evaluateTestQuestions():
         local_verbose = True
         settings.verbose = False
     nlp = spacy.load('en_core_web_md')
-
-    with open("all_questions_and_answers.tsv") as tsvfile:
-        tsvreader = csv.reader(tsvfile, delimiter="\t")
-
-        total_correct = 0
-        total_incorrect = 0
-        total_lines = sum(1 for row in tsvreader)
-        tsvfile.seek(0)
-        for line in tsvreader:
-            # Get the answer
-            answer = evaluateQuestion(nlp, line[0]) 
-            
-            current_correct = total_correct
-
-            if local_verbose:
-                print("") # Necessary newline due to line 84.
-                print("Given answers vs actual answer:")
-
-            if len(answer) > 1:
-                correct = True
-                for i in range(len(answer)):
-                    if len(line) > i + 2:
-                        line[i + 2] = line[i + 2].strip()
-                        if local_verbose:
-                            print(answer[i].lower() + " vs " + line[i + 2].lower())
-                        if answer[i].lower() != line[i + 2].lower():
-                            correct = False
-                    else:
-                        correct = False
-                if correct:
-                    total_correct += 1
-                else:
-                    total_incorrect += 1
-            elif len(answer) > 0:
-                answer = answer[0]
-                line[2] = line[2].strip()
-                if local_verbose:
-                    print(answer.lower() +  " vs " + line[2].lower())
-                if answer.lower() == line[2].lower():
-                    total_correct += 1
-                else:
-                    total_incorrect += 1
-            else:
-                # No answer is available.
-                if local_verbose:
-                    print("No answer was given.")
-                total_incorrect += 1
-
-            if local_verbose:
-                if current_correct == total_correct:
-                    print("Incorrect: " + line[0])
-                else:
-                    print("Correct: " + line[0])
-            print("\rAnswered correctly: " + str(total_correct) + "/" 
-                    + str(total_lines) + ". Answered incorrectly: " 
-                    + str(total_incorrect) + "/" + str(total_lines), end="")
-
-        print("Percentage of correct answers: " 
-              + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
-
-def evaluateAdjustedTestQuestions():
-    local_verbose = False
-    if settings.verbose:
-        print("Loading SpaCy library...")
-
-        # When combining test and verbose, only use verbose locally.
-        local_verbose = True
-        settings.verbose = False
-    nlp = spacy.load('en_core_web_md')
-
-    with open("qa_v2.csv") as tsvfile:
-        tsvreader = csv.reader(tsvfile, delimiter=";")
+    
+    if test_choice == 0:
+        file = "all_questions_and_answers.tsv"
+    else:
+        file = "qa_v2.csv"
+    with open(file) as dbfile:
+        if test_choice == 0:
+            delim = "\t"
+        else:
+            delim = ";"
+        reader = csv.reader(dbfile, delimiter=delim)
 
         total_correct = 0
         total_incorrect = 0
-        total_lines = sum(1 for row in tsvreader)
-        tsvfile.seek(0)
-        for line in tsvreader:
+        total_lines = sum(1 for row in reader)
+        dbfile.seek(0)
+        for line in reader:
             # Get the answer
             answer = evaluateQuestion(nlp, line[0]) 
             
@@ -117,10 +56,13 @@ def evaluateAdjustedTestQuestions():
                 print("") # Necessary newline due to line 84.
                 print("Given answers vs actual answer:")
 			
-            lineLength = 0
-            for x in line:
-                if x != "":
-                    lineLength += 1
+            if test_choice == 0:
+                lineLength = len(line)
+            else:
+                lineLength = 0
+                for x in line:
+                     if x != "":
+                         lineLength += 1
 					
             if len(answer) > 1:
                 correct = True
@@ -151,7 +93,7 @@ def evaluateAdjustedTestQuestions():
                 if local_verbose:
                     print("No answer was given.")
                 total_incorrect += 1
-
+            
             if local_verbose:
                 if current_correct == total_correct:
                     print("Incorrect: " + line[0])
@@ -213,10 +155,7 @@ def main(argv, nlp):
             settings.verbose = True 
 
     if test_questions:
-        if test_choice == 0:
-            evaluateTestQuestions()
-        if test_choice == 1:
-            evaluateAdjustedTestQuestions()
+        evaluateTestQuestions(test_choice)
         exit()
 
     if load_nlp:
