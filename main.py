@@ -63,36 +63,51 @@ def evaluateTestQuestions(test_choice):
                 for x in line:
                      if x != "":
                          lineLength += 1
-
-            if answer != None and len(answer) > 1:
+            
+            # If the system and the DB both have a different number of answers,
+            # they aren't the same answers. Thus, the answer is incorrect.
+            if lineLength - 2 != len(answer):
+                total_incorrect += 1
+            # There is more than 1 correct answer
+            elif len(answer) > 1:
                 correct = True
+                # Making 2 lists for both system and correct answers
+                systemAnswers = []
+                correctAnswers = []
                 for i in range(len(answer)):
-                    if lineLength > i + 2:
-                        line[i + 2] = line[i + 2].strip()
-                        if local_verbose:
-                            print(answer[i].lower() + " vs " + line[i + 2].lower())
-                        if answer[i].lower() != line[i + 2].lower():
-                            correct = False
-                    else:
+                    systemAnswers.append(answer[i].lower())
+                    correctAnswers.append(line[i + 2].lower().strip())
+                # Checking whether the lists are equal
+                systemAnswers.sort()
+                correctAnswers.sort()
+                for i in range(len(answer)):
+                    if local_verbose:
+                        print(systemAnswers[i] + " vs " + correctAnswers[i])
+                    if systemAnswers[i] != correctAnswers[i]:
                         correct = False
+                # Adding the correctness to the totals
                 if correct:
                     total_correct += 1
                 else:
                     total_incorrect += 1
-            elif answer != None and len(answer) > 0:
-                answer = answer[0]
-                line[2] = line[2].strip()
+            # This is only 1 correct answer
+            elif len(answer) == 1:
+                systemAnswer = answer[0].lower()
+                correctAnswer = line[2].lower().strip()
                 if local_verbose:
-                    print(answer.lower() +  " vs " + line[2].lower())
-                if answer.lower() == line[2].lower():
+                    print(systemAnswer +  " vs " + correctAnswer)
+                if systemAnswer == correctAnswer:
                     total_correct += 1
                 else:
                     total_incorrect += 1
-            else:
-                # No answer is available.
+            # There aren't any correct answers
+            elif len(answer) == 0:
                 if local_verbose:
                     print("No answer was given.")
-                total_incorrect += 1
+                if lineLength == 2:
+                    total_correct += 1
+                else:
+                    total_incorrect += 1
             
             if local_verbose:
                 if current_correct == total_correct:
