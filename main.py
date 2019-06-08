@@ -3,6 +3,7 @@
 import getopt, sys, spacy
 import syntacticAnalysis as s
 import wikidataQuery as q
+import settings
 import csv
 
 def printHelp():
@@ -10,6 +11,7 @@ def printHelp():
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
     print("-w, --wrapper    Does not load NLP.")
+    print("-v, --verbose    Verbose mode. Prints debugging messages about it's progress.")
 
 def evaluateQuestion(nlp, line):
     # Input here the process for answering the question
@@ -19,29 +21,70 @@ def evaluateQuestion(nlp, line):
     return q.makeQuery(keywords)
 
 def evaluateTestQuestions():
-    print("Loading SpaCy library...")
+    local_verbose = False
+    if settings.verbose:
+        print("Loading SpaCy library...")
+
+        # When combining test and verbose, only use verbose locally.
+        local_verbose = True
+        settings.verbose = False
     nlp = spacy.load('en_core_web_md')
 
     with open("all_questions_and_answers.tsv") as tsvfile:
         tsvreader = csv.reader(tsvfile, delimiter="\t")
 
         total_correct = 0
+        total_incorrect = 0
         total_lines = sum(1 for row in tsvreader)
         tsvfile.seek(0)
         for line in tsvreader:
             # Get the answer
             answer = evaluateQuestion(nlp, line[0]) 
+            
+            current_correct = total_correct
 
-            if isinstance(answer, list):
+            if local_verbose:
+                print("") # Necessary newline due to line 84.
+                print("Given answers vs actual answer:")
+
+            if len(answer) > 1:
                 correct = True
                 for i in range(len(answer)):
-                    if answer[i].lower() != line[i + 2].lower():
+                    if len(line) > i + 2:
+                        line[i + 2] = line[i + 2].strip()
+                        if local_verbose:
+                            print(answer[i].lower() + " vs " + line[i + 2].lower())
+                        if answer[i].lower() != line[i + 2].lower():
+                            correct = False
+                    else:
                         correct = False
                 if correct:
                     total_correct += 1
-            else:
+                else:
+                    total_incorrect += 1
+            elif len(answer) > 0:
+                answer = answer[0]
+                line[2] = line[2].strip()
+                if local_verbose:
+                    print(answer.lower() +  " vs " + line[2].lower())
                 if answer.lower() == line[2].lower():
                     total_correct += 1
+                else:
+                    total_incorrect += 1
+            else:
+                # No answer is available.
+                if local_verbose:
+                    print("No answer was given.")
+                total_incorrect += 1
+
+            if local_verbose:
+                if current_correct == total_correct:
+                    print("Incorrect: " + line[0])
+                else:
+                    print("Correct: " + line[0])
+            print("\rAnswered correctly: " + str(total_correct) + "/" 
+                    + str(total_lines) + ". Answered incorrectly: " 
+                    + str(total_incorrect) + "/" + str(total_lines), end="")
 
         print("Percentage of correct answers: " 
               + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
@@ -57,15 +100,18 @@ def testQuestions():
                     print(" - " + x)
 
 def main(argv, nlp):
+    # Do some necessary initialisation
     load_nlp = True
+    test_questions = False
+    settings.init()
 
     # Check commandline arguments
     full_cmd_arguments = argv
     argument_list = full_cmd_arguments[1:]
     
     # Argument options: help, test
-    unix_options = "htw"
-    gnu_options = ["help", "test", "wrapper"]
+    unix_options = "htwv"
+    gnu_options = ["help", "test", "wrapper", "verbose"]
 
     try:
         arguments, values = getopt.getopt(argument_list, unix_options, gnu_options)
@@ -80,13 +126,19 @@ def main(argv, nlp):
             printHelp()
             exit()
         elif current_argument in ("-t", "--test"):
-            evaluateTestQuestions()
-            exit()
+            test_questions = True
         elif current_argument in ("-w", "--wrapper"):
             load_nlp = False        
+        elif current_argument in ("-v", "--verbose"):
+            settings.verbose = True 
+
+    if test_questions:
+        evaluateTestQuestions()
+        exit()
 
     if load_nlp:
-        print("Loading SpaCy library...")
+        if settings.verbose:
+            print("Loading SpaCy library...")
         nlp = spacy.load('en_core_web_md')
 
     # testQuestions()

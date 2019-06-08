@@ -1,10 +1,5 @@
 # Functions needed for syntactic analysis
-
-# A pre-defined dictionary for difficult terms
-key_words_dict = {'band members': 'has part', 'members': 'has part',
-                  'member': 'has part', 'band member': 'has part',
-                  'founding year': 'inception', 'bandmember': 'has part',
-                  'bandmembers': 'has part', 'founding': 'inception'}
+import settings
 
 def syntacticAnalysis(nlp, line):
     question = nlp(line)
@@ -18,6 +13,7 @@ def syntacticAnalysis(nlp, line):
     aux_pos = sentenceContains(question, "aux", 0)
     attr_pos = sentenceContains(question, "attr", 0)
     case_pos = sentenceContains(question, "case", 0)
+    det_pos = sentenceContains(question, "det", 0)
     dobj_pos = sentenceContains(question, "dobj", 0)
     nsubj_pos = sentenceContains(question, "nsubj", 0)
     pobj_pos = sentenceContains(question, "pobj", 0)
@@ -30,13 +26,24 @@ def syntacticAnalysis(nlp, line):
     # Check if the order of dependencies is correct.
     if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
         # Likely a When/what/who is/are/did X [verb] question.
+        keywords.append((1, "question_id"))
+        if settings.verbose:
+            print("When/what/who is/are/did X [verb] question.")
         keywords.append((getPhrase(question, advmod_pos), "question_word"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
         keywords.append((getPhrase(question, root_pos), "property"))
+
+        # Add further specification if available.
+        # TODO: See if this is possible for other questions as well.
+        if prep_pos > nsubj_pos and pobj_pos > prep_pos:
+            keywords.append((getPhrase(question, pobj_pos), "specification"))
     elif (root_pos > 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
-            and pobj_pos > root_pos):
+            and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
         # Likely an X of Y question.
+        keywords.append((2, "question_id"))
+        if settings.verbose:
+            print("X of Y question.")
         keywords.append((getPhrase(question, pobj_pos), "entity"))
 
         secondAttribute = sentenceContains(question, "attr", root_pos)
@@ -51,16 +58,21 @@ def syntacticAnalysis(nlp, line):
             keywords.append((getPhrase(question, attr_pos), "question_word"))
     elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
-        # Likely a What X did Y [verb]?
+        # Likely a What X did Y [verb] question.
+        keywords.append((3, "question_id"))
+        if settings.verbose:
+            print("What X did Y [verb] question.")
         keywords.append((getPhrase(question, dobj_pos), "property"))
         keywords.append((getPhrase(question, nsubj_pos), "entity"))
 
         if attr_pos != -1:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
     elif (root_pos != -1 and poss_pos > root_pos
-            and case_pos > poss_pos 
-            and sentenceContains(question, "attr", case_pos) > case_pos):
+            and case_pos > poss_pos):
         # Likely an X's Y question.
+        keywords.append((4, "question_id"))
+        if settings.verbose:
+            print("X's Y question.")
         keywords.append((getPhrase(question, poss_pos), "entity"))
 
         if attr_pos == 0:
@@ -68,18 +80,74 @@ def syntacticAnalysis(nlp, line):
             secondAttribute = sentenceContains(question, "attr", case_pos)
             if secondAttribute != -1:
                 keywords.append((getPhrase(question, secondAttribute), "property"))
+            else:
+                # A second attribute could not be found.
+                # Likely a construction like 'X of Y' is present.
+                # TODO: Make a cleaner version of this.
+                phrase = ""
+                for i in range(len(question)):
+                    if i > case_pos and question[i].dep_ != "punct":
+                        phrase += question[i].text + " "
+                keywords.append((phrase.strip(), "property"))
 
         elif attr_pos > case_pos:
             keywords.append((getPhrase(question, attr_pos), "property"))
     elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
-        # TODO: Discuss whether we should also append the verb.
+        keywords.append((5, "question_id"))
+        if settings.verbose:
+            print("What X [verb] Y question.")
 
         keywords.append((getPhrase(question, nsubj_pos), "property"))
         keywords.append((getPhrase(question, dobj_pos), "entity"))
+        keywords.append((getPhrase(question, root_pos), "root"))
 
         if attr_pos == 0:
             keywords.append((getPhrase(question, attr_pos), "question_word"))
+    elif (det_pos != -1 and nsubj_pos > det_pos and root_pos > nsubj_pos 
+            and attr_pos > root_pos):
+        # Likely a [Det] X is Y question.
+        keywords.append((6, "question_id"))
+        if settings.verbose:
+            print("[Det] X is Y question.")
+
+        keywords.append((getPhrase(question, nsubj_pos), "property"))
+        keywords.append((getPhrase(question, attr_pos), "entity"))
+
+        # TODO: Put this tag up for discussion.
+        # Back-up property:
+        keywords.append(("part of", "property_backup"))
+    elif nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
+        # Likely a '(remind me,) X was Y of what again?' question type.
+        # TODO: Take into account that is can also likely be a yes/no
+        # question. E.g. X was the Y of Z (right?)
+        keywords.append((7, "question_id"))
+
+        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        keywords.append((getPhrase(question, attr_pos), "property"))
+        # TODO: Make a cleaner version of this.
+        phrase = ""
+        for i in range(len(question)):
+            # TODO: Change 'which' to question word.
+            if (prep_pos != -1 and i > prep_pos and question[i].dep_ != "punct"
+                    and question[i].text != 'which'):
+                phrase += question[i].text + " "
+        keywords.append((phrase.strip(), "specification"))
+    elif root_pos == 0 or aux_pos == 0:
+        # Likely a yes/no question
+        keywords.append((7, "question_id"))
+
+        if aux_pos == 0:
+            keywords.append((getPhrase(question, aux_pos), "question_word"))
+            keywords.append((getPhrase(question, root_pos), "property"))
+            keywords.append((getPhrase(question, pobj_pos), "property_attribute"))
+        elif root_pos == 0:
+            keywords.append((getPhrase(question, root_pos), "question_word"))
+            
+        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        
+    if settings.verbose:
+        print(keywords)
 
     return keywords
 

@@ -16,7 +16,7 @@ if __name__ == "__main__":
             nlp = spacy.load('en_core_web_md')
         # Run main.py as if it is called normally (but with the wrapper parameter).
         try:
-            main.main(['main.py', '--wrapper'], nlp)
+            main.main(['main.py', '--wrapper', '--verbose'], nlp)
         except KeyboardInterrupt:
             raise
         except Exception as e:
