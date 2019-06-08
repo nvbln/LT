@@ -1,7 +1,7 @@
 # QA-system for music-related questions
 Hi! This system has been developed as a project for the RUG course Language Technology (2019).
 The following people have been part of this development:
-- Nathan van Beelen (s...)
+- Nathan van Beelen (s3392961)
 - Kevin Kelly (s...)
 - Galina Lesnic (s3367398)
 - Tom Veldhuis (s3451771)
