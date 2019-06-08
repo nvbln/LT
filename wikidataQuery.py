@@ -45,13 +45,13 @@ def makeQuery(keywords):
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
     # TODO make query for each type
     elif query_type == 'date':
-        answer = submitDateQuery(entity_id, properties_id)
+        answer = submitTypeQuery(entity_id, properties_id, 'date')
         
     elif query_type == 'place':
-        answer = submitPlaceQuery(entity_id, properties_id)
+        answer = submitTypeQuery(entity_id, properties_id, 'place')
         
     elif query_type == 'person':
-        answer = submitPersonQuery(entity_id, properties_id)
+        answer = submitTypeQuery(entity_id, properties_id, 'person')
     #elif query_type == 'cause':
     #elif query_type == 'count':
 
@@ -130,79 +130,9 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
         answer = ['No']
     return answer
 
-def submitDateQuery(entity_id, properties_id):
+def submitTypeQuery(entity_id, properties_id, query_type):
     url = 'https://query.wikidata.org/sparql'
-    query = '''
-        SELECT ?wd ?ps_Label{{
-        VALUES (?entity) {{(wd:{0})}}
-        
-        ?entity ?p ?statement .
-        ?statement ?ps ?ps_ .
-        
-        ?wd wikibase:statementProperty ?ps.
-        FILTER(DATATYPE(?ps_) = xsd:dateTime).
-        
-        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-    }}
-    '''.format(entity_id)
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    
-    answers = []
-    chosen_property = None
-    for prop_id in properties_id:
-        for item in data['results']['bindings']:
-            if (chosen_property != None and item['wd']['value'] != chosen_property):
-                continue
-            if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
-                answers.append(item['ps_Label']['value'])
-                chosen_property = prop_id['id']
-    return answers
-
-def submitPlaceQuery(entity_id, properties_id):
-    url = 'https://query.wikidata.org/sparql'
-    query = '''
-        SELECT ?wd ?ps_Label{{
-          VALUES (?entity) {{(wd:{0})}}
-        
-          ?entity ?p ?statement .
-          ?statement ?ps ?ps_ .
-          
-          ?wd wikibase:statementProperty ?ps.
-          ?wd wdt:P31 ?k.
-        
-          FILTER(?k = wd:Q18635217).
-        
-          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}
-    '''.format(entity_id)
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    
-    answers = []
-    chosen_property = None
-    for prop_id in properties_id:
-        for item in data['results']['bindings']:
-            if (chosen_property != None and item['wd']['value'] != chosen_property):
-                continue
-            if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
-                answers.append(item['ps_Label']['value'])
-                chosen_property = prop_id['id']
-    return answers
-
-def submitPersonQuery(entity_id, properties_id):
-    url = 'https://query.wikidata.org/sparql'
-    query = '''
-        SELECT ?wd ?ps_Label{{
-          VALUES (?entity) {{(wd:{0})}}
-        
-          ?entity ?p ?statement .
-          ?statement ?ps ?ps_ .
-        
-          ?wd wikibase:statementProperty ?ps.
-          ?ps_ wdt:P31 wd:Q5.
-        
-          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}
-    '''.format(entity_id)
+    query = query_dict[query_type].format(entity_id)
     data = requests.get(url, params={'query': query, 'format': 'json'}).json()
     
     answers = []
@@ -215,3 +145,42 @@ def submitPersonQuery(entity_id, properties_id):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
     return answers
+
+query_dict = {
+    'date':'''
+        SELECT ?wd ?ps_Label{{
+        VALUES (?entity) {{(wd:{0})}}
+        
+        ?entity ?p ?statement .
+        ?statement ?ps ?ps_ .
+        
+        ?wd wikibase:statementProperty ?ps.
+        FILTER(DATATYPE(?ps_) = xsd:dateTime).
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+    }}''',
+    'place': '''
+        SELECT ?wd ?ps_Label{{
+          VALUES (?entity) {{(wd:{0})}}
+        
+          ?entity ?p ?statement .
+          ?statement ?ps ?ps_ .
+          
+          ?wd wikibase:statementProperty ?ps.
+          ?wd wdt:P31 wd:Q18635217.
+        
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}''', 
+    'person':'''
+        SELECT ?wd ?ps_Label{{
+          VALUES (?entity) {{(wd:{0})}}
+        
+          ?entity ?p ?statement .
+          ?statement ?ps ?ps_ .
+        
+          ?wd wikibase:statementProperty ?ps.
+          ?ps_ wdt:P31 wd:Q5.
+        
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}'''
+    }
