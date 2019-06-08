@@ -1,7 +1,7 @@
 import spacy
 import sys
 
-nlp = spacy.load('en_core_web_md')
+nlp = spacy.load('en')
 
 for line in sys.stdin:
     line = line.rstrip()

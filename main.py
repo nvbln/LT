@@ -28,7 +28,7 @@ def evaluateTestQuestions():
         # When combining test and verbose, only use verbose locally.
         local_verbose = True
         settings.verbose = False
-    nlp = spacy.load('en_core_web_md')
+    nlp = spacy.load('en')
 
     with open("all_questions_and_answers.tsv") as tsvfile:
         tsvreader = csv.reader(tsvfile, delimiter="\t")
@@ -139,7 +139,7 @@ def main(argv, nlp):
     if load_nlp:
         if settings.verbose:
             print("Loading SpaCy library...")
-        nlp = spacy.load('en_core_web_md')
+        nlp = spacy.load('en')
 
     # testQuestions()
     print("State a question:")
