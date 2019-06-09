@@ -156,7 +156,7 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
 
 def submitTypeQuery(entity_id, properties_id, query_type):
     url = 'https://query.wikidata.org/sparql'
-    query = query_dict[query_type].format(entity_id)
+    query = query_dict[query_type][0].format(entity_id)
     data = []
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
@@ -165,13 +165,16 @@ def submitTypeQuery(entity_id, properties_id, query_type):
             print("Problem with the following query:")
             print(query)
             print(traceback.format_exc())
-        return []
+        return []        
     
     
     answers = []
     chosen_property = None
+    
+    processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2])
+
     for prop_id in properties_id:
-        for item in data['results']['bindings']:
+        for item in processed_data:
             if (chosen_property != None and item['wd']['value'] != chosen_property):
                 continue
             if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
@@ -180,7 +183,7 @@ def submitTypeQuery(entity_id, properties_id, query_type):
     return answers
 
 query_dict = {
-    'date':'''
+    'date':['''
         SELECT ?wd ?ps_Label{{
         VALUES (?entity) {{(wd:{0})}}
         
@@ -191,33 +194,33 @@ query_dict = {
         FILTER(DATATYPE(?ps_) = xsd:dateTime).
         
         SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-    }}''',
-    'place': '''
-        SELECT ?wd ?ps_Label{{
+    }}''','is_date', []],
+    'place': ['''
+        SELECT ?wd ?ps_Label ?is_place{{
           VALUES (?entity) {{(wd:{0})}}
         
           ?entity ?p ?statement .
           ?statement ?ps ?ps_ .
           
           ?wd wikibase:statementProperty ?ps.
-          ?wd wdt:P31 wd:Q18635217.
+          ?wd wdt:P31 ?is_place.
         
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''', 
-    'person':'''
-        SELECT ?wd ?ps_Label{{
+        }}''', 'is_place', ['http://www.wikidata.org/entity/Q18635217']],
+    'person':['''
+        SELECT ?wd ?ps_Label ?is_human {{
           VALUES (?entity) {{(wd:{0})}}
         
           ?entity ?p ?statement .
           ?statement ?ps ?ps_ .
         
           ?wd wikibase:statementProperty ?ps.
-          ?ps_ wdt:P31 wd:Q5.
+          ?ps_ wdt:P31 ?is_human.
         
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''',
-    'cause':'''
-        SELECT ?wd ?ps_Label{{
+        }}''','is_human', ['http://www.wikidata.org/entity/Q5']],
+    'cause':['''
+        SELECT ?wd ?ps_Label ?is_cause{{
           VALUES (?entity) {{(wd:{0})}}
         
           ?entity ?p ?statement .
@@ -225,8 +228,15 @@ query_dict = {
         
           ?wd wikibase:statementProperty ?ps.
           ?wd wdt:P1629 ?cause_type.
-          ?cause_type wdt:P279 wd:Q179289.
+          ?cause_type wdt:P279 ?is_cause.
           
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}'''
+        }}''','is_cause', ['http://www.wikidata.org/entity/Q179289']]
     }
+        
+def filterBy(data, var_id, entities_id):
+    new_data = []
+    for item in data['results']['bindings']:
+        if (not entities_id or item[var_id]['value'] in entities_id):
+            new_data.append(item)
+    return new_data
