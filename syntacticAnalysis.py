@@ -161,6 +161,8 @@ def syntacticAnalysis(nlp, line):
         addToDict(keywords, "question_id", 3)
         if settings.verbose:
             print("What X did Y [verb] question.")
+        
+        addToDict(keywords, "question_word", "What")
         addToDict(keywords,"property", getPhrase(question, dobj_pos))
         addToDict(keywords,"entity", getPhrase(question, nsubj_pos))
 
@@ -207,7 +209,8 @@ def syntacticAnalysis(nlp, line):
         addToDict(keywords, "question_id", 6)
         if settings.verbose:
             print("[Det] X is Y question.")
-
+        
+        addToDict(keywords, "question_word", "What")
         addToDict(keywords, "property", getPhrase(question, nsubj_pos))
         addToDict(keywords, "entity", getPhrase(question, attr_pos))
 

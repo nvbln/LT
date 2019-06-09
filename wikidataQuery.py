@@ -3,13 +3,17 @@ import requests
 import settings
 import traceback
 import json
+import simplejson
+# Installable with 'pip install textblob'
+from textblob import TextBlob
 
 # A pre-defined dictionary for difficult terms
 property_dict = {'band members': 'has part', 'members': 'has part',
                   'member': 'has part', 'band member': 'has part',
                   'founding year': 'inception', 'bandmember': 'has part',
                   'bandmembers': 'has part', 'founding': 'inception',
-                  'play': 'instrument'}
+                  'play': 'instrument', 'real name':'birth name',
+                  'album':'part of'}
 
 # List of w-words, feel free to add any words I forgot
 w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
@@ -28,12 +32,14 @@ def makeQuery(keywords):
         query_type = 'yes/no'
     
     if "property" in keywords:
-        prop = property_dict.get(keywords["property"][0], keywords["property"][0])
+        blob = TextBlob(keywords["property"][0])
+        prop = ' '.join([word.singularize() for word in blob.words])
+        prop = property_dict.get(prop, prop)
+        if settings.verbose:
+            print('property:', prop)
         properties_id = searchEntities(prop, "property")
         if len(properties_id) > 0:
             property_id = properties_id[0]['id']
-        else:
-            property_id = []
     
     if "entity" in keywords:        
         entity_id = searchEntity(keywords["entity"][0], "entity")
@@ -140,7 +146,7 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
 
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
         if settings.verbose:
             print("Problem with the following query:")
             print(query)
@@ -180,6 +186,8 @@ def submitTypeQuery(entity_id, properties_id, query_type):
             if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
+    if settings.verbose:
+        print('chosen property:', chosen_property)
     return answers
 
 query_dict = {
