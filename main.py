@@ -10,7 +10,7 @@ def printHelp():
     print("Available arguments:")
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
-    print("-a, --atest		Evaluates the program based on the adjusted test questions.")
+    print("-a, --atest		  Evaluates the program based on the adjusted test questions.")
     print("-w, --wrapper    Does not load NLP.")
     print("-v, --verbose    Verbose mode. Prints debugging messages about it's progress.")
 
@@ -29,6 +29,7 @@ def evaluateTestQuestions(test_choice):
         # When combining test and verbose, only use verbose locally.
         local_verbose = True
         settings.verbose = False
+
     nlp = spacy.load('en_core_web_md')
     
     if test_choice == 0:
@@ -176,7 +177,7 @@ def main(argv, nlp):
     if load_nlp:
         if settings.verbose:
             print("Loading SpaCy library...")
-        nlp = spacy.load('en_core_web_md')
+        nlp = spacy.load('en')
 
     print("State a question:")
     for line in sys.stdin:
