@@ -230,3 +230,25 @@ query_dict = {
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
         }}'''
     }
+
+# Query dictionary that uses SPARQL triples that worked for me (Tom) when
+# using it for Assignment 4 (the SpaCy assignment). Note that these triplets can
+# be added to the original query and do not need to be used in a separate query.
+# Also, this dictionary assumes the original entity that is being requested is called
+# '?answer'. Change this to whatever would fit the query you would like to put it in.
+query_dict2 = {
+    'date':'''
+     FILTER ( datatype(?answer) = xsd:dateTime )
+     ''',
+    'place':'''
+     ?answer wdt:P31/wdt:P279* wd:Q17334923 .
+     ''',
+    'person':'''
+     { ?answer wdt:P31/wdt:P279* wd:Q215679 . }
+     UNION
+     { ?answer wdt:P31/wdt:P279* wd:Q43229 . }
+     ''',
+    'cause':'''
+     ?answer wdt:P31/wdt:P279* wd:Q179289 .
+     ''',
+}
