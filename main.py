@@ -45,82 +45,78 @@ def evaluateTestQuestions(test_choice):
 
         total_correct = 0
         total_incorrect = 0
-        total_lines = sum(1 for row in reader)
+        total_lines = sum(1 for row in reader if row[0] != "")
         dbfile.seek(0)
         for line in reader:
-            # Get the answer
-            answer = evaluateQuestion(nlp, line[0]) 
-            
-            current_correct = total_correct
-
-            if local_verbose:
-                print("") # Necessary newline due to line 84.
-                print("Given answers vs actual answer:")
-			
-            if test_choice == 0:
-                lineLength = len(line)
-            else:
-                lineLength = 0
-                for x in line:
-                     if x != "":
-                         lineLength += 1
-            
-            # If the system and the DB both have a different number of answers,
-            # they aren't the same answers. Thus, the answer is incorrect.
-            if lineLength - 2 != len(answer):
-                total_incorrect += 1
-            # There is more than 1 correct answer
-            elif len(answer) > 1:
-                correct = True
-                # Making 2 lists for both system and correct answers
-                systemAnswers = []
-                correctAnswers = []
-                for i in range(len(answer)):
-                    systemAnswers.append(answer[i].lower())
-                    correctAnswers.append(line[i + 2].lower().strip())
-                # Checking whether the lists are equal
+            # Getting the question
+            question = line[0].strip()
+            if question != "":
+                if local_verbose:
+                    print(question)
+                
+                # Getting the system answers
+                systemAnswers = evaluateQuestion(nlp, question)
+                for i in range(len(systemAnswers)):
+                    systemAnswers[i] = systemAnswers[i].lower().strip()
                 systemAnswers.sort()
+                
+                # Getting the number of system answers
+                numberOfSystemAnswers = len(systemAnswers)
+                
+                # Getting the number of correct answers
+                numberOfCorrectAnswers = 0
+                if test_choice == 0:
+                    numberOfCorrectAnswers = len(line) - 2
+                elif test_choice == 1:
+                    for i in range(len(line)):
+                        if i >= 2 and line[i] != "":
+                            numberOfCorrectAnswers += 1
+                
+                # Getting the correct answers
+                correctAnswers = []
+                for i in range(numberOfCorrectAnswers):
+                    answer = line[2 + i].lower().strip()
+                    correctAnswers.append(answer)
                 correctAnswers.sort()
-                for i in range(len(answer)):
+                
+                # Comparing the system and correct answers
+                correct = True
+                if numberOfSystemAnswers != numberOfCorrectAnswers:
+                    correct = False
                     if local_verbose:
-                        print(systemAnswers[i] + " vs " + correctAnswers[i])
-                    if systemAnswers[i] != correctAnswers[i]:
-                        correct = False
-                # Adding the correctness to the totals
-                if correct:
-                    total_correct += 1
-                else:
-                    total_incorrect += 1
-            # This is only 1 correct answer
-            elif len(answer) == 1:
-                systemAnswer = answer[0].lower()
-                correctAnswer = line[2].lower().strip()
-                if local_verbose:
-                    print(systemAnswer +  " vs " + correctAnswer)
-                if systemAnswer == correctAnswer:
-                    total_correct += 1
-                else:
-                    total_incorrect += 1
-            # There aren't any correct answers
-            elif len(answer) == 0:
-                if local_verbose:
-                    print("No answer was given.")
-                if lineLength == 2:
-                    total_correct += 1
-                else:
-                    total_incorrect += 1
-            
-            if local_verbose:
-                if current_correct == total_correct:
-                    print("Incorrect: " + line[0])
-                else:
-                    print("Correct: " + line[0])
-            print("\rAnswered correctly: " + str(total_correct) + "/" 
-                    + str(total_lines) + ". Answered incorrectly: " 
-                    + str(total_incorrect) + "/" + str(total_lines), end="")
+                        if numberOfSystemAnswers == 0:
+                            print("No answer could be given by the system.")
+                        else:
+                            print("The given answer(s) was not expected.")
+                elif numberOfSystemAnswers > 0:
+                    if local_verbose:
+                        print("Given answers vs correct answers:")
+                    for i in range(numberOfSystemAnswers):
+                        if local_verbose:
+                            print(systemAnswers[i] + " vs " + correctAnswers[i])
+                        if systemAnswers[i] != correctAnswers[i]:
+                            correct = False
+                elif numberOfSystemAnswers == 0 and local_verbose:
+                     print("There is no correct answer.")
 
-        print("Percentage of correct answers: " 
-              + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")
+                # Adding the result to the totals
+                if correct:
+                    if local_verbose:
+                        print("Correct")
+                    total_correct += 1
+                else:
+                    if local_verbose:
+                        print("Incorrect")
+                    total_incorrect += 1
+                
+                # Printing the current results 
+                print("\rCorrect answers: " + str(total_correct) + "/" + str(total_lines) + 
+                      ", Wrong answers: " + str(total_incorrect) + "/" + str(total_lines), end="")
+                if local_verbose:
+                    print("")
+        
+        # Printing the total results
+        print("\nPercentage of correct answers: " + "{0:.2f}".format((total_correct/total_lines) * 100) + "%")  
 
 def testQuestions():
     with open("qa_v2.csv") as tsvfile:
