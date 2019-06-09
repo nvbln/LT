@@ -68,6 +68,8 @@ def evaluateTestQuestions(test_choice):
             # they aren't the same answers. Thus, the answer is incorrect.
             if lineLength - 2 != len(answer):
                 total_incorrect += 1
+                if local_verbose:
+                    print("Different number of answers.")
             # There is more than 1 correct answer
             elif len(answer) > 1:
                 correct = True
