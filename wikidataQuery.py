@@ -31,6 +31,7 @@ def makeQuery(keywords):
                 
         elif keyword[1] == "property":
             prop = property_dict.get(keyword[0], keyword[0])
+            qual = qualifier_dict.get(keyword[0], keyword[0])
             properties_id = searchEntities(prop, "property")
             if len(properties_id) > 0:
                 property_id = properties_id[0]['id']
@@ -60,7 +61,7 @@ def makeQuery(keywords):
         answer = submitTypeQuery(entity_id, properties_id, 'date')
     
     elif specification_id is not None:
-        answer = submitQualifiedDate(entWord, properties_id, specification_id)
+        answer = submitQualifiedDate(entWord, properties_id, specification_id, qual)
         
     elif query_type == 'place':
         answer = submitTypeQuery(entity_id, properties_id, 'place')
@@ -164,7 +165,7 @@ def submitTypeQuery(entity_id, properties_id, query_type):
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
     return answers
 
-def submitQualifiedDate(entWord, properties_id, specification_id):
+def submitQualifiedDate(entWord, properties_id, specification_id, qual):
     url = 'https://query.wikidata.org/sparql'
     query = '''
         SELECT ?wd ?ps_Label ?pq_Label ?wdpqLabel{{
@@ -190,10 +191,12 @@ def submitQualifiedDate(entWord, properties_id, specification_id):
     for prop_id in properties_id:
         for item in data['results']['bindings']:
             if(item['ps_Label']['value'] == entWord):
+                # if(qual == item['wdpqLabel']['value'])
                 if (chosen_property != None and item['wd']['value'] != chosen_property):
                     continue
                 if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
                     chosen_property = prop_id['id']
+                    #print(qual, item['wdpqLabel']['value'])
                     answers.append(item['pq_Label']['value'])
     return answers
 
