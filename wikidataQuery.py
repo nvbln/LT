@@ -4,7 +4,6 @@ import settings
 import traceback
 import json
 import simplejson
-# Installable with 'pip install textblob'
 from textblob import TextBlob
 
 # A pre-defined dictionary for difficult terms
@@ -171,7 +170,7 @@ def submitTypeQuery(entity_id, property_ids, query_type):
             print("Problem with the following query:")
             print(query)
             print(traceback.format_exc())
-        return []        
+        return []
     
     
     answers = []
