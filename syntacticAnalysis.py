@@ -120,11 +120,15 @@ def syntacticAnalysis(nlp, line):
     prep_pos = sentenceContains(question, "prep", 0)
     root_pos = sentenceContains(question, "ROOT", 0)
 
+    # In the past tense nsubjpass is used instead of nsubj.
+    if nsubj_pos == -1:
+        nsubj_pos = sentenceContains(question, "nsubjpass", 0)
+
     ## Get the question types based on the syntactic dependencies found.
     # Check if the sentence contains advmod, nsubj, and root.
     # Check if the order of dependencies is correct.
     if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
-        # Likely a When/what/who is/are/did X [verb] question.
+        # Likely a When/what/who is/was/are/did X [verb] question.
         keywords.append((1, "question_id"))
         if settings.verbose:
             print("When/what/who is/are/did X [verb] question.")
