@@ -40,12 +40,12 @@ def makeQuery(keywords):
     
     # TODO attribute is not always entity, right? needs to be fixed
     if "property_attribute" in keywords:
-        prop_attribute_id = searchEntity(keywords.get(["property_attribute"][0], "entity"))
+        prop_attribute_id = searchEntity(keywords["property_attribute"][0], "entity")
     
     # Firing the query
     answer = []
     if query_type == 'basic':
-        answer = submitQuery(entity_id, property_id)
+        answer = submitTypeQuery(entity_id, properties_id, 'basic')
         
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
@@ -183,6 +183,17 @@ def submitTypeQuery(entity_id, properties_id, query_type):
     return answers
 
 query_dict = {
+    'basic':['''
+        SELECT ?wd ?ps_Label {{
+            VALUES (?entity) {{(wd:{0})}}
+            
+            ?entity ?p ?statement .
+            ?statement ?ps ?ps_ .
+            
+            ?wd wikibase:statementProperty ?ps.
+            
+            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}''', 'wd', []],
     'date':['''
         SELECT ?wd ?ps_Label{{
         VALUES (?entity) {{(wd:{0})}}
