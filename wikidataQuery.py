@@ -10,28 +10,26 @@ property_dict = {'band members': 'has part', 'members': 'has part',
                   'play': 'instrument'}
 
 # List of w-words, feel free to add any words I forgot
-w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
-                'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
+w_words_list = ['What', 'Who', 'When', 'Where', 'Why', 'How', 'Which']
 
 def makeQuery(keywords):
     property_id = None
     entity_id = None
     prop_attribute_id = None
-    properties_id = None
     
     query_type = None
 
     for keyword in keywords:
         if keyword[1] == "question_word":
-            query_type = w_words_dict.get(keyword[0], 'yes/no')
+            if keyword[0] in w_words_list:
+                #TODO update property & possibly query based on that
+                query_type = 'basic'
+            else:
+                query_type = 'yes/no' 
                 
         elif keyword[1] == "property":
             prop = property_dict.get(keyword[0], keyword[0])
-            properties_id = searchEntities(prop, "property")
-            if len(properties_id) > 0:
-                property_id = properties_id[0]['id']
-            else:
-                property_id = []
+            property_id = searchEntity(prop, "property")
             
         elif keyword[1] == "entity":
             entity_id = searchEntity(keyword[0], "entity")
@@ -46,19 +44,6 @@ def makeQuery(keywords):
         answer = submitQuery(entity_id, property_id)
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
-    # TODO make query for each type
-    elif query_type == 'date':
-        answer = submitTypeQuery(entity_id, properties_id, 'date')
-        
-    elif query_type == 'place':
-        answer = submitTypeQuery(entity_id, properties_id, 'place')
-        
-    elif query_type == 'person':
-        answer = submitTypeQuery(entity_id, properties_id, 'person')
-    elif query_type == 'cause':
-        answer = submitTypeQuery(entity_id, properties_id, 'cause')
-    # TODO extract how many questions properly
-    #elif query_type == 'count':
 
     return answer
 
@@ -80,20 +65,6 @@ def searchEntity(entity, string_type):
          if settings.verbose:
              print(json['search'][0]['id'])
          return json['search'][0]['id']
-
-def searchEntities(entity, string_type):
-    url = 'https://www.wikidata.org/w/api.php'
-    if string_type != 'entity':
-        url = url + '?type=' + string_type
-    params = {'action':'wbsearchentities',
-              'language':'en',
-              'format':'json'}
-
-    params['search'] = entity.rstrip()
-    json = requests.get(url,params).json()
-    
-    # Return all the entities
-    return json['search']
 
 # Creates a query and returns the answer(s) on that query.
 def submitQuery(entity_id, property_id):
@@ -134,71 +105,3 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
     else:
         answer = ['No']
     return answer
-
-def submitTypeQuery(entity_id, properties_id, query_type):
-    url = 'https://query.wikidata.org/sparql'
-    query = query_dict[query_type].format(entity_id)
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    
-    answers = []
-    chosen_property = None
-    for prop_id in properties_id:
-        for item in data['results']['bindings']:
-            if (chosen_property != None and item['wd']['value'] != chosen_property):
-                continue
-            if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
-                answers.append(item['ps_Label']['value'])
-                chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
-    return answers
-
-query_dict = {
-    'date':'''
-        SELECT ?wd ?ps_Label{{
-        VALUES (?entity) {{(wd:{0})}}
-        
-        ?entity ?p ?statement .
-        ?statement ?ps ?ps_ .
-        
-        ?wd wikibase:statementProperty ?ps.
-        FILTER(DATATYPE(?ps_) = xsd:dateTime).
-        
-        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-    }}''',
-    'place': '''
-        SELECT ?wd ?ps_Label{{
-          VALUES (?entity) {{(wd:{0})}}
-        
-          ?entity ?p ?statement .
-          ?statement ?ps ?ps_ .
-          
-          ?wd wikibase:statementProperty ?ps.
-          ?wd wdt:P31 wd:Q18635217.
-        
-          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''', 
-    'person':'''
-        SELECT ?wd ?ps_Label{{
-          VALUES (?entity) {{(wd:{0})}}
-        
-          ?entity ?p ?statement .
-          ?statement ?ps ?ps_ .
-        
-          ?wd wikibase:statementProperty ?ps.
-          ?ps_ wdt:P31 wd:Q5.
-        
-          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''',
-    'cause':'''
-        SELECT ?wd ?ps_Label{{
-          VALUES (?entity) {{(wd:{0})}}
-        
-          ?entity ?p ?statement .
-          ?statement ?ps ?ps_ .
-        
-          ?wd wikibase:statementProperty ?ps.
-          ?wd wdt:P1629 ?cause_type.
-          ?cause_type wdt:P279 wd:Q179289.
-          
-          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}'''
-    }
