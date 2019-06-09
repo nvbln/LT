@@ -21,29 +21,29 @@ def makeQuery(keywords):
     prop_attribute_id = []
     properties_id = []
     
-    query_type = []
-
-    for keyword in keywords:
-        if keyword[1] == "question_word":
-            query_type = w_words_dict.get(keyword[0], 'yes/no')
-                
-        elif keyword[1] == "property":
-            prop = property_dict.get(keyword[0], keyword[0])
-            properties_id = searchEntities(prop, "property")
-            if len(properties_id) > 0:
-                property_id = properties_id[0]['id']
-            else:
-                property_id = []
-            
-        elif keyword[1] == "entity":
-            entity_id = searchEntity(keyword[0], "entity")
-            
-        elif keyword[1] == "property_attribute":
-            # TODO attribute is not always entity, right? needs to be fixed
-            prop_attribute_id = searchEntity(keyword[0], "entity")
-            
-    answer = []
+    # Querying for IRIs
+    if "question_word" in keywords:
+        query_type = w_words_dict.get(keywords["question_word"][0], 'yes/no')
+    else:
+        query_type = 'yes/no'
     
+    if "property" in keywords:
+        prop = property_dict.get(keywords["property"][0], keywords["property"][0])
+        properties_id = searchEntities(prop, "property")
+        if len(properties_id) > 0:
+            property_id = properties_id[0]['id']
+        else:
+            property_id = []
+    
+    if "entity" in keywords:        
+        entity_id = searchEntity(keywords["entity"][0], "entity")
+    
+    # TODO attribute is not always entity, right? needs to be fixed
+    if "property_attribute" in keywords:
+        prop_attribute_id = searchEntity(keywords.get(["property_attribute"][0], "entity"))
+    
+    # Firing the query
+    answer = []
     if query_type == 'basic':
         answer = submitQuery(entity_id, property_id)
         
