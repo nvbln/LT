@@ -7,17 +7,21 @@ property_dict = {'band members': 'has part', 'members': 'has part',
                   'member': 'has part', 'band member': 'has part',
                   'founding year': 'inception', 'bandmember': 'has part',
                   'bandmembers': 'has part', 'founding': 'inception',
-                  'play': 'instrument'}
+                  'play': 'instrument', 'join': 'has part'}
 
 # List of w-words, feel free to add any words I forgot
-w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
+w_words_dict = {'What':'basic', 'Who':'basic', 'When':'date', 'Where':'place',
                 'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
+
+qualifier_dict = {'join': 'start time', 'start': 'start time', 'leave': 'end    time', 'quit': 'end time', 'stop': 'end time'}
+
 
 def makeQuery(keywords):
     property_id = None
     entity_id = None
     prop_attribute_id = None
     properties_id = None
+    specification_id = None
     
     query_type = None
 
@@ -34,11 +38,16 @@ def makeQuery(keywords):
                 property_id = []
             
         elif keyword[1] == "entity":
+            entWord = keyword[0]
             entity_id = searchEntity(keyword[0], "entity")
             
         elif keyword[1] == "property_attribute":
             # TODO attribute is not always entity, right? needs to be fixed
             prop_attribute_id = searchEntity(keyword[0], "entity")
+
+        elif keyword[1] == "specification":
+            # TODO attribute is not always entity, right? needs to be fixed
+            specification_id = searchEntity(keyword[0], "entity")
             
     answer = []
     
@@ -47,11 +56,15 @@ def makeQuery(keywords):
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
     # TODO make query for each type
-    elif query_type == 'date':
+    elif query_type == 'date' and specification_id == None:
         answer = submitTypeQuery(entity_id, properties_id, 'date')
+    
+    elif specification_id is not None:
+        answer = submitQualifiedDate(entWord, properties_id, specification_id)
         
     elif query_type == 'place':
         answer = submitTypeQuery(entity_id, properties_id, 'place')
+
         
     elif query_type == 'person':
         answer = submitTypeQuery(entity_id, properties_id, 'person')
@@ -59,7 +72,7 @@ def makeQuery(keywords):
         answer = submitTypeQuery(entity_id, properties_id, 'cause')
     # TODO extract how many questions properly
     #elif query_type == 'count':
-
+    print(query_type)
     return answer
 
 def searchEntity(entity, string_type):
@@ -149,6 +162,39 @@ def submitTypeQuery(entity_id, properties_id, query_type):
             if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
+    return answers
+
+def submitQualifiedDate(entWord, properties_id, specification_id):
+    url = 'https://query.wikidata.org/sparql'
+    query = '''
+        SELECT ?wd ?ps_Label ?pq_Label ?wdpqLabel{{
+          VALUES (?entity) {{(wd:{0})}}
+        
+          ?entity ?p ?statement .
+          ?statement ?ps ?ps_ .
+          
+          ?wd wikibase:statementProperty ?ps.
+          
+          OPTIONAL {{
+          ?statement ?pq ?pq_ .
+          ?wdpq wikibase:qualifier ?pq
+          }}
+        
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}
+    '''.format(specification_id)
+    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    
+    answers = []
+    chosen_property = None
+    for prop_id in properties_id:
+        for item in data['results']['bindings']:
+            if(item['ps_Label']['value'] == entWord):
+                if (chosen_property != None and item['wd']['value'] != chosen_property):
+                    continue
+                if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
+                    chosen_property = prop_id['id']
+                    answers.append(item['pq_Label']['value'])
     return answers
 
 query_dict = {
