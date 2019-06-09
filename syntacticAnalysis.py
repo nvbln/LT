@@ -14,7 +14,7 @@ def syntacticAnalysis(nlp, line):
     question = nlp(line)
 
     keywords = []
-
+    
     # Check if the sentence contains a date (and remove it).
     # TODO: Clean up code.
     # TODO: Check if the date is not between puncts. This likely means that
@@ -257,7 +257,6 @@ def getPhrase(sentence, position):
     # TODO: Make effective use of the 'prep' dependency.
     # For example: "United States of America" is one phrase,
     # but it will not be seen as such unless using this dependency.
-
     word = sentence[position]
     phrase = ""
     position -= 1
@@ -268,6 +267,42 @@ def getPhrase(sentence, position):
 
     return phrase + word.text
 
+# Gets phrases that are bounded by prepositions from a single word on a given
+# position in the sentence, using dependency subtrees. If this word is part
+# of a named entity, it will get the named entity instead.
+def getPrepPhrase(sentence, position):
+    word = sentence[position]
+    phrase = []
+    # Check whether the word is part of a named entity
+    if word.ent_iob_ == "B":
+        if word.dep_ != "det":
+            phrase.append(word.text)
+        position += 1
+        while(position <= len(sentence) and sentence[position].ent_iob_ == "I"):
+            phrase.append(sentence[position].text)
+            position += 1
+        phrase = " ".join(phrase)
+    elif word.ent_iob_ == "I":
+       while(position >= 0 and sentence[position].ent_iob_ != "B"):
+           position -= 1
+       if sentence[position].dep_ != "det":
+           phrase.append(sentence[position].text)
+       position += 1
+       while(position <= len(sentence) and sentence[position].ent_iob_ == "I"):
+           phrase.append(sentence[position].text)
+           position += 1
+       phrase = " ".join(phrase)
+    # If it is not part of a named entity, use the dependency subtree to form the phrase
+    else:
+       for d in word.subtree:
+           # Current phrase boundaries: prepositions (add more if necessary)
+           if d.dep_ == "prep":
+              break
+           if d.dep_ != "det":
+               phrase.append(d.text)
+       phrase = " ".join(phrase)
+    return phrase
+    
 def getPhraseUntil(sentence, start_position, end_position):
     phrase = ""
     position = start_position
