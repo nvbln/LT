@@ -23,7 +23,7 @@ def makeQuery(keywords):
     property_id = []
     entity_id = []
     prop_attribute_id = []
-    properties_id = []
+    property_ids = []
     
     # Querying for IRIs
     if "question_word" in keywords:
@@ -37,9 +37,9 @@ def makeQuery(keywords):
         prop = property_dict.get(prop, prop)
         if settings.verbose:
             print('property:', prop)
-        properties_id = searchEntities(prop, "property")
-        if len(properties_id) > 0:
-            property_id = properties_id[0]['id']
+        property_ids = searchEntities(prop, "property")
+        if len(property_ids) > 0:
+            property_id = property_ids[0]['id']
     
     if "entity" in keywords:        
         entity_id = searchEntity(keywords["entity"][0], "entity")
@@ -51,23 +51,23 @@ def makeQuery(keywords):
     # Firing the query
     answer = []
     if query_type == 'basic':
-        answer = submitTypeQuery(entity_id, properties_id, 'basic')
+        answer = submitTypeQuery(entity_id, property_ids, 'basic')
         
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
         
     # TODO make query for each type
     elif query_type == 'date':
-        answer = submitTypeQuery(entity_id, properties_id, 'date')
+        answer = submitTypeQuery(entity_id, property_ids, 'date')
         
     elif query_type == 'place':
-        answer = submitTypeQuery(entity_id, properties_id, 'place')
+        answer = submitTypeQuery(entity_id, property_ids, 'place')
         
     elif query_type == 'person':
-        answer = submitTypeQuery(entity_id, properties_id, 'person')
+        answer = submitTypeQuery(entity_id, property_ids, 'person')
         
     elif query_type == 'cause':
-        answer = submitTypeQuery(entity_id, properties_id, 'cause')
+        answer = submitTypeQuery(entity_id, property_ids, 'cause')
     # TODO extract how many questions properly
     #elif query_type == 'count':
 
@@ -160,7 +160,7 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
         answer = ['No']
     return answer
 
-def submitTypeQuery(entity_id, properties_id, query_type):
+def submitTypeQuery(entity_id, property_ids, query_type):
     url = 'https://query.wikidata.org/sparql'
     query = query_dict[query_type][0].format(entity_id)
     data = []
@@ -179,7 +179,7 @@ def submitTypeQuery(entity_id, properties_id, query_type):
     
     processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2])
 
-    for prop_id in properties_id:
+    for prop_id in property_ids:
         for item in processed_data:
             if (chosen_property != None and item['wd']['value'] != chosen_property):
                 continue
