@@ -1,6 +1,8 @@
 # Functions needed for making queries for WikiData
 import requests
 import settings
+import traceback
+import json
 
 # A pre-defined dictionary for difficult terms
 property_dict = {'band members': 'has part', 'members': 'has part',
@@ -14,12 +16,12 @@ w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
                 'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
 
 def makeQuery(keywords):
-    property_id = None
-    entity_id = None
-    prop_attribute_id = None
-    properties_id = None
+    property_id = []
+    entity_id = []
+    prop_attribute_id = []
+    properties_id = []
     
-    query_type = None
+    query_type = []
 
     for keyword in keywords:
         if keyword[1] == "question_word":
@@ -44,8 +46,10 @@ def makeQuery(keywords):
     
     if query_type == 'basic':
         answer = submitQuery(entity_id, property_id)
+        
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
+        
     # TODO make query for each type
     elif query_type == 'date':
         answer = submitTypeQuery(entity_id, properties_id, 'date')
@@ -55,6 +59,7 @@ def makeQuery(keywords):
         
     elif query_type == 'person':
         answer = submitTypeQuery(entity_id, properties_id, 'person')
+        
     elif query_type == 'cause':
         answer = submitTypeQuery(entity_id, properties_id, 'cause')
     # TODO extract how many questions properly
@@ -107,8 +112,15 @@ def submitQuery(entity_id, property_id):
         }}
         '''.format(entity_id, property_id)
 
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-
+    try:
+        data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    except json.decoder.JSONDecodeError:
+        if settings.verbose:
+            print("Problem with the following query:")
+            print(query)
+            print(traceback.format_exc())
+        return []
+    
     answers = []
     for item in data['results']['bindings']:
         for var in item :
@@ -126,8 +138,15 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
         }}
         '''.format(entity_id, property_id, attribute_id)
 
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-
+    try:
+        data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    except json.decoder.JSONDecodeError:
+        if settings.verbose:
+            print("Problem with the following query:")
+            print(query)
+            print(traceback.format_exc())
+        return []
+    
     answer = []
     if data['boolean'] == True:
         answer = ['Yes']
@@ -138,7 +157,16 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
 def submitTypeQuery(entity_id, properties_id, query_type):
     url = 'https://query.wikidata.org/sparql'
     query = query_dict[query_type].format(entity_id)
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    data = []
+    try:
+        data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+    except json.decoder.JSONDecodeError:
+        if settings.verbose:
+            print("Problem with the following query:")
+            print(query)
+            print(traceback.format_exc())
+        return []
+    
     
     answers = []
     chosen_property = None
