@@ -17,8 +17,6 @@ def syntacticAnalysis(nlp, line):
 
     # Check if the sentence contains a date (and remove it).
     # TODO: Clean up code.
-    # TODO: Check if the date is not between puncts. This likely means that
-    # we are dealing with names.
     # TODO: The datefinder tries to fill in the gaps by itself.
     # I.e. for '1999' it will return '1999-06-08' (which is today 20 years ago).
     # There is the strict option. So we should exploit that and report whether
@@ -33,7 +31,33 @@ def syntacticAnalysis(nlp, line):
            latest_prep_pos = current_prep_pos 
            current_prep_pos = sentenceContains(question, "prep", latest_prep_pos + 1)
 
-        if question[latest_prep_pos].text == "between":
+        # Check if it is not a name (by checking punctuation).
+        punctuation_count = 0
+        punct_positions = []
+        punct_pos = sentenceContains(question, "punct", 0)
+        while (punct_pos != -1):
+            punctuation_count += 1
+            punct_positions.append(punct_pos)
+            punct_pos = sentenceContains(question, "punct", punct_pos + 1)
+
+        name = False
+
+        if punctuation_count > 2:
+            # Check punctuation positioning
+            appears_before = False
+            appears_after = False
+            for punct_position in punct_positions:
+                # So it can be either before or after the prep.
+                if punct_position <= prep_pos + 1:
+                    appears_before = True
+                elif (punct_position > prep_pos + 2 
+                        and question[punct_position].dep_ != '.'):
+                    appears_after = True
+            if appears_before and appears_after:
+                name = True
+
+                    
+        if question[latest_prep_pos].text == "between" and not name:
             # There should be two dates.
             cc_pos = sentenceContains(question, "cc", latest_prep_pos)
             date1 = getPhraseUntil(question, latest_prep_pos + 1, cc_pos)
@@ -77,7 +101,7 @@ def syntacticAnalysis(nlp, line):
                 new_line += "?"
                 question = nlp(new_line)
 
-        else:
+        elif not name:
             date = getPhraseUntil(question, latest_prep_pos + 1, 99999)
             if len(list(datefinder.find_dates(date))) == 1:
                 # A date has been found.
