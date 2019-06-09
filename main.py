@@ -109,7 +109,8 @@ def evaluateTestQuestions(test_choice):
                     total_incorrect += 1
                 
                 # Printing the current results 
-                print("\rCorrect answers: " + str(total_correct) + "/" + str(total_lines) + ", Wrong answers: " + str(total_incorrect) + "/" + str(total_lines), end="")
+                print("\rCorrect answers: " + str(total_correct) + "/" + str(total_lines) + 
+                      ", Wrong answers: " + str(total_incorrect) + "/" + str(total_lines), end="")
                 if local_verbose:
                     print("")
         
