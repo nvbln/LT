@@ -13,7 +13,7 @@ WN_ADVERB = 'r'
 def syntacticAnalysis(nlp, line):
     question = nlp(line)
 
-    keywords = []
+    keywords = {}
 
     # Check if the sentence contains a date (and remove it).
     # TODO: Clean up code.
@@ -45,31 +45,31 @@ def syntacticAnalysis(nlp, line):
             if (len(list(datefinder.find_dates(date1))) == 1
                     and len(list(datefinder.find_dates(date2))) == 1):
                 # Dates successfully extracted. Add them to the keywords.
-                keywords.append(("date_word", "between"))
+                addToDict(keywords, "date_word", "between")
 
                 date1_match = list(datefinder.find_dates(date1, index=True))
                 date1_match = date1_match[0]
                 date2_match = list(datefinder.find_dates(date2, index=True))
                 date2_match = date2_match[0]
-
-                keywords.append(("date1", date1_match[0]))
-                keywords.append(("date2", date2_match[0]))
+                
+                addToDict(keywords, "date1", date1_match[0])
+                addToDict(keywords, "date2", date2_match[0])
 
                 date1_source = date1[date1_match[1][0]:date1_match[1][1]]
                 date2_source = date2[date2_match[1][0]:date2_match[1][1]]
-
-                keywords.append(("date1_source", date1_source))
-                keywords.append(("date2_source", date2_source))
+                
+                addToDict(keywords, "date1_source", date1_source)
+                addToDict(keywords, "date2_source", date2_source)
 
                 if len(list(datefinder.find_dates(date1, strict=True))) == 1:
-                    keywords.append(("date1_strict", True))
+                    addToDict(keywords,"date1_strict", True)
                 else:
-                    keywords.append(("date1_strict", False))
+                    addToDict(keywords,"date1_strict", False)
 
                 if len(list(datefinder.find_dates(date2, strict=True))) == 1:
-                    keywords.append(("date2_strict", True))
+                    addToDict(keywords,"date2_strict", True)
                 else:
-                    keywords.append(("date2_strict", False))
+                    addToDict(keywords,"date2_strict", False)
 
                 # Remove phrase from the question.
                 # Also remove the space
@@ -81,20 +81,20 @@ def syntacticAnalysis(nlp, line):
             date = getPhraseUntil(question, latest_prep_pos + 1, 99999)
             if len(list(datefinder.find_dates(date))) == 1:
                 # A date has been found.
-                keywords.append(("date_word", question[latest_prep_pos].text))
+                addToDict(keywords,"date_word", question[latest_prep_pos].text)
 
                 date_match = list(datefinder.find_dates(date, index=True))
                 date_match = date_match[0]
 
-                keywords.append(("date1", date_match[0]))
+                addToDict(keywords,"date1", date_match[0])
 
                 date_source = date[date_match[1][0]:date_match[1][1]]
-                keywords.append(("date1_source", date_source))
+                addToDict(keywords,"date1_source", date_source)
                 
                 if len(list(datefinder.find_dates(date, strict=True))) == 1:
-                    keywords.append(("date1_strict", True))
+                    addToDict(keywords,"date1_strict", True)
                 else:
-                    keywords.append(("date1_strict", False))
+                    addToDict(keywords,"date1_strict", False)
 
                 # Remove phrase from the question.
                 # Also remove the space
@@ -129,122 +129,126 @@ def syntacticAnalysis(nlp, line):
     # Check if the order of dependencies is correct.
     if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
         # Likely a When/what/who is/was/are/did X [verb] question.
-        keywords.append((1, "question_id"))
+        addToDict(keywords,"question_id",1)
+
         if settings.verbose:
             print("When/what/who is/are/did X [verb] question.")
-        keywords.append((getPhrase(question, advmod_pos), "question_word"))
-        keywords.append((getPhrase(question, nsubj_pos), "entity"))
-        keywords.append((getPhrase(question, root_pos), "property"))
+        addToDict(keywords, "question_word", getPhrase(question, advmod_pos))
+        addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
+        addToDict(keywords, "property", getPhrase(question, root_pos))
 
         # Add further specification if available.
         # TODO: See if this is possible for other questions as well.
         if prep_pos > nsubj_pos and pobj_pos > prep_pos:
-            keywords.append((getPhrase(question, pobj_pos), "specification"))
+            addToDict(keywords,"specification", getPhrase(question, pobj_pos))
     elif (root_pos > 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
         # Likely an X of Y question.
-        keywords.append((2, "question_id"))
+        addToDict(keywords, "question_id", 2)
         if settings.verbose:
             print("X of Y question.")
-        keywords.append((getPhrase(question, pobj_pos), "entity"))
+        addToDict(keywords, "entity", getPhrase(question, pobj_pos))
 
         secondAttribute = sentenceContains(question, "attr", root_pos)
         if nsubj_pos != -1:
-            keywords.append((getPhrase(question, nsubj_pos), "property"))
+            addToDict(keywords, "property", getPhrase(question, nsubj_pos))
         elif secondAttribute != -1:
-            keywords.append((getPhrase(question, secondAttribute), "property"))
+            addToDict(keywords, "property", getPhrase(question, secondAttribute))
 
         if advmod_pos != -1:
-            keywords.append((getPhrase(question, advmod_pos), "question_word"))
+            addToDict(keywords,"question_word", getPhrase(question, advmod_pos))
         elif attr_pos != -1:
-            keywords.append((getPhrase(question, attr_pos), "question_word"))
+            addToDict(keywords, "question_word", getPhrase(question, attr_pos))
     elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
-        keywords.append((3, "question_id"))
+        addToDict(keywords, "question_id", 3)
         if settings.verbose:
             print("What X did Y [verb] question.")
-        keywords.append((getPhrase(question, dobj_pos), "property"))
-        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        
+        addToDict(keywords, "question_word", "What")
+        addToDict(keywords,"property", getPhrase(question, dobj_pos))
+        addToDict(keywords,"entity", getPhrase(question, nsubj_pos))
 
         if attr_pos != -1:
-            keywords.append((getPhrase(question, attr_pos), "question_word"))
+            addToDict(keywords, "question_word", getPhrase(question, attr_pos))
     elif (root_pos != -1 and poss_pos > root_pos
             and case_pos > poss_pos):
         # Likely an X's Y question.
-        keywords.append((4, "question_id"))
+        addToDict(keywords,"question_id", 4)
         if settings.verbose:
             print("X's Y question.")
-        keywords.append((getPhrase(question, poss_pos), "entity"))
+        addToDict(keywords,"entity", getPhrase(question, poss_pos))
 
         if attr_pos == 0:
-            keywords.append((getPhrase(question, attr_pos), "question_word"))
+            addToDict(keywords, "question_word", getPhrase(question, attr_pos))
             secondAttribute = sentenceContains(question, "attr", case_pos)
             if secondAttribute != -1:
-                keywords.append((getPhrase(question, secondAttribute), "property"))
+                addToDict(keywords, "property", getPhrase(question, secondAttribute))
             else:
                 # A second attribute could not be found.
                 # Likely a construction like 'X of Y' is present.
                 # 9999 means to go on until a punctuation is encountered.
                 # This should probably be changed once we implement checking for dates
                 # and such which are often at the end of a sentence.
-                keywords.append((getPhraseUntil(question, prep_pos + 1, 9999), "specification"))
+                addToDict(keywords,"specification", getPhraseUntil(question, prep_pos + 1, 9999))
 
         elif attr_pos > case_pos:
-            keywords.append((getPhrase(question, attr_pos), "property"))
+            addToDict(keywords, "property", getPhrase(question, attr_pos))
     elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
-        keywords.append((5, "question_id"))
+        addToDict(keywords,"question_id",5)
         if settings.verbose:
             print("What X [verb] Y question.")
 
-        keywords.append((getPhrase(question, nsubj_pos), "property"))
-        keywords.append((getPhrase(question, dobj_pos), "entity"))
-        keywords.append((getPhrase(question, root_pos), "root"))
+        addToDict(keywords, "property", getPhrase(question, nsubj_pos))
+        addToDict(keywords, "entity", getPhrase(question, dobj_pos))
+        addToDict(keywords, "root", getPhrase(question, root_pos))
 
         if attr_pos == 0:
-            keywords.append((getPhrase(question, attr_pos), "question_word"))
+            addToDict(keywords,"question_word", getPhrase(question, attr_pos))
     elif (det_pos != -1 and nsubj_pos > det_pos and root_pos > nsubj_pos 
             and attr_pos > root_pos):
         # Likely a [Det] X is Y question.
-        keywords.append((6, "question_id"))
+        addToDict(keywords, "question_id", 6)
         if settings.verbose:
             print("[Det] X is Y question.")
-
-        keywords.append((getPhrase(question, nsubj_pos), "property"))
-        keywords.append((getPhrase(question, attr_pos), "entity"))
+        
+        addToDict(keywords, "question_word", "What")
+        addToDict(keywords, "property", getPhrase(question, nsubj_pos))
+        addToDict(keywords, "entity", getPhrase(question, attr_pos))
 
         # TODO: Put this tag up for discussion.
         # Back-up property:
-        keywords.append(("part of", "property_backup"))
+        addToDict(keywords, "property_backup", "part of")
     elif nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
         # Likely a '(remind me,) X was Y of what again?' question type.
         # TODO: Take into account that is can also likely be a yes/no
         # question. E.g. X was the Y of Z (right?)
-        keywords.append((7, "question_id"))
+        addToDict(keywords, "question_id", 7)
 
-        keywords.append((getPhrase(question, nsubj_pos), "entity"))
-        keywords.append((getPhrase(question, attr_pos), "property"))
+        addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
+        addToDict(keywords,  "property", getPhrase(question, attr_pos))
 
         # TODO: Change 'which' to question word.
         if question[prep_pos + 1].text == 'which':
             # 9999 means to go on until a punctuation is encountered.
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
-            keywords.append((getPhraseUntil(question, prep_pos + 2, 9999), "specification"))
+            addToDict(keywords, "specification", getPhraseUntil(question, prep_pos + 2, 9999))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
-        keywords.append((7, "question_id"))
+        addToDict(keywords, "question_id", 7)
 
         if aux_pos == 0:
-            keywords.append((getPhrase(question, aux_pos), "question_word"))
-            keywords.append((getPhrase(question, root_pos), "property"))
-            keywords.append((getPhrase(question, pobj_pos), "property_attribute"))
+            addToDict(keywords, "question_word", getPhrase(question, aux_pos))
+            addToDict(keywords,  "property", getPhrase(question, root_pos))
+            addToDict(keywords, "property_attribute", getPhrase(question, pobj_pos))
         elif root_pos == 0:
-            keywords.append((getPhrase(question, root_pos), "question_word"))
+            addToDict(keywords,"question_word", getPhrase(question, root_pos))
             
-        keywords.append((getPhrase(question, nsubj_pos), "entity"))
+        addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
         
     if settings.verbose:
         print(keywords)
@@ -330,3 +334,8 @@ def convertPOS(word, from_pos, to_pos):
     # return all the possibilities sorted by probability
     # for each element e in result, e[0] gives the name and e[1] gives the probability
     return result
+
+def addToDict(dictionary, item, value):
+    dictionary[item] = dictionary.get(item, []) + [value]
+    
+    

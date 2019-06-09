@@ -12,3 +12,5 @@ The following people have been part of this development:
 - NLTK for Python3
   - WordNet from `nltk.corpus`
 - Datefinder (can be installed by running `pip3 install datefinder`)
+- Textblob (can be installed by running `pip3 install text blob` and then `python3 -m textblob.download_corpora`)
+- Simplejson (can be installed by running `pip3 install simplejson`)

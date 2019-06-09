@@ -3,13 +3,16 @@ import requests
 import settings
 import traceback
 import json
+import simplejson
+from textblob import TextBlob
 
 # A pre-defined dictionary for difficult terms
 property_dict = {'band members': 'has part', 'members': 'has part',
                   'member': 'has part', 'band member': 'has part',
                   'founding year': 'inception', 'bandmember': 'has part',
                   'bandmembers': 'has part', 'founding': 'inception',
-                  'play': 'instrument'}
+                  'play': 'instrument', 'real name':'birth name',
+                  'album':'part of'}
 
 # List of w-words, feel free to add any words I forgot
 w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
@@ -19,49 +22,51 @@ def makeQuery(keywords):
     property_id = []
     entity_id = []
     prop_attribute_id = []
-    properties_id = []
+    property_ids = []
     
-    query_type = []
-
-    for keyword in keywords:
-        if keyword[1] == "question_word":
-            query_type = w_words_dict.get(keyword[0], 'yes/no')
-                
-        elif keyword[1] == "property":
-            prop = property_dict.get(keyword[0], keyword[0])
-            properties_id = searchEntities(prop, "property")
-            if len(properties_id) > 0:
-                property_id = properties_id[0]['id']
-            else:
-                property_id = []
-            
-        elif keyword[1] == "entity":
-            entity_id = searchEntity(keyword[0], "entity")
-            
-        elif keyword[1] == "property_attribute":
-            # TODO attribute is not always entity, right? needs to be fixed
-            prop_attribute_id = searchEntity(keyword[0], "entity")
-            
+    # Querying for IRIs
+    if "question_word" in keywords:
+        query_type = w_words_dict.get(keywords["question_word"][0], 'yes/no')
+    else:
+        query_type = 'yes/no'
+    
+    if "property" in keywords:
+        blob = TextBlob(keywords["property"][0])
+        prop = ' '.join([word.singularize() for word in blob.words])
+        prop = property_dict.get(prop, prop)
+        if settings.verbose:
+            print('property:', prop)
+        property_ids = searchEntities(prop, "property")
+        if len(property_ids) > 0:
+            property_id = property_ids[0]['id']
+    
+    if "entity" in keywords:        
+        entity_id = searchEntity(keywords["entity"][0], "entity")
+    
+    # TODO attribute is not always entity, right? needs to be fixed
+    if "property_attribute" in keywords:
+        prop_attribute_id = searchEntity(keywords["property_attribute"][0], "entity")
+    
+    # Firing the query
     answer = []
-    
     if query_type == 'basic':
-        answer = submitQuery(entity_id, property_id)
+        answer = submitTypeQuery(entity_id, property_ids, 'basic')
         
     elif query_type == 'yes/no':
         answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
         
     # TODO make query for each type
     elif query_type == 'date':
-        answer = submitTypeQuery(entity_id, properties_id, 'date')
+        answer = submitTypeQuery(entity_id, property_ids, 'date')
         
     elif query_type == 'place':
-        answer = submitTypeQuery(entity_id, properties_id, 'place')
+        answer = submitTypeQuery(entity_id, property_ids, 'place')
         
     elif query_type == 'person':
-        answer = submitTypeQuery(entity_id, properties_id, 'person')
+        answer = submitTypeQuery(entity_id, property_ids, 'person')
         
     elif query_type == 'cause':
-        answer = submitTypeQuery(entity_id, properties_id, 'cause')
+        answer = submitTypeQuery(entity_id, property_ids, 'cause')
     # TODO extract how many questions properly
     #elif query_type == 'count':
 
@@ -140,7 +145,7 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
 
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
         if settings.verbose:
             print("Problem with the following query:")
             print(query)
@@ -154,9 +159,9 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
         answer = ['No']
     return answer
 
-def submitTypeQuery(entity_id, properties_id, query_type):
+def submitTypeQuery(entity_id, property_ids, query_type):
     url = 'https://query.wikidata.org/sparql'
-    query = query_dict[query_type].format(entity_id)
+    query = query_dict[query_type][0].format(entity_id)
     data = []
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
@@ -170,17 +175,33 @@ def submitTypeQuery(entity_id, properties_id, query_type):
     
     answers = []
     chosen_property = None
-    for prop_id in properties_id:
-        for item in data['results']['bindings']:
+    
+    processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2])
+
+    for prop_id in property_ids:
+        for item in processed_data:
             if (chosen_property != None and item['wd']['value'] != chosen_property):
                 continue
             if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
+    if settings.verbose:
+        print('chosen property:', chosen_property)
     return answers
 
 query_dict = {
-    'date':'''
+    'basic':['''
+        SELECT ?wd ?ps_Label {{
+            VALUES (?entity) {{(wd:{0})}}
+            
+            ?entity ?p ?statement .
+            ?statement ?ps ?ps_ .
+            
+            ?wd wikibase:statementProperty ?ps.
+            
+            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}''', 'wd', []],
+    'date':['''
         SELECT ?wd ?ps_Label{{
         VALUES (?entity) {{(wd:{0})}}
         
@@ -191,33 +212,33 @@ query_dict = {
         FILTER(DATATYPE(?ps_) = xsd:dateTime).
         
         SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-    }}''',
-    'place': '''
-        SELECT ?wd ?ps_Label{{
+    }}''','is_date', []],
+    'place': ['''
+        SELECT ?wd ?ps_Label ?is_place{{
           VALUES (?entity) {{(wd:{0})}}
         
           ?entity ?p ?statement .
           ?statement ?ps ?ps_ .
           
           ?wd wikibase:statementProperty ?ps.
-          ?wd wdt:P31 wd:Q18635217.
+          ?wd wdt:P31 ?is_place.
         
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''', 
-    'person':'''
-        SELECT ?wd ?ps_Label{{
+        }}''', 'is_place', ['http://www.wikidata.org/entity/Q18635217']],
+    'person':['''
+        SELECT ?wd ?ps_Label ?is_human {{
           VALUES (?entity) {{(wd:{0})}}
         
           ?entity ?p ?statement .
           ?statement ?ps ?ps_ .
         
           ?wd wikibase:statementProperty ?ps.
-          ?ps_ wdt:P31 wd:Q5.
+          ?ps_ wdt:P31 ?is_human.
         
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''',
-    'cause':'''
-        SELECT ?wd ?ps_Label{{
+        }}''','is_human', ['http://www.wikidata.org/entity/Q5']],
+    'cause':['''
+        SELECT ?wd ?ps_Label ?is_cause{{
           VALUES (?entity) {{(wd:{0})}}
         
           ?entity ?p ?statement .
@@ -225,8 +246,15 @@ query_dict = {
         
           ?wd wikibase:statementProperty ?ps.
           ?wd wdt:P1629 ?cause_type.
-          ?cause_type wdt:P279 wd:Q179289.
+          ?cause_type wdt:P279 ?is_cause.
           
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}'''
+        }}''','is_cause', ['http://www.wikidata.org/entity/Q179289']]
     }
+        
+def filterBy(data, var_id, entities_id):
+    new_data = []
+    for item in data['results']['bindings']:
+        if (not entities_id or item[var_id]['value'] in entities_id):
+            new_data.append(item)
+    return new_data
