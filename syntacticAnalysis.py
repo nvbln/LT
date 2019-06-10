@@ -24,7 +24,7 @@ def syntacticAnalysis(nlp, line):
         if word.ent_iob_ == "B":
             names.append(word.text)
         # It's the continuation of a name.
-        elif word.ent_iob_ == "I":
+        elif word.ent_iob_ == "I" and word.text != "'s":
             names[-1] += " " + word.text
             new_line = new_line.replace(" " + word.text, word.text, 1)
     question = nlp(new_line)
