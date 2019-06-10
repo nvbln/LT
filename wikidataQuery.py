@@ -6,6 +6,7 @@ import json
 import simplejson
 from textblob import TextBlob
 
+# TODO account for band member occupation properties
 # A pre-defined dictionary for difficult terms
 property_dict = {'band members': 'has part', 'members': 'has part',
                   'member': 'has part', 'band member': 'has part',
@@ -23,6 +24,7 @@ def makeQuery(keywords):
     entity_id = []
     prop_attribute_id = []
     property_ids = []
+    filters = []
     
     # Querying for IRIs
     if "question_word" in keywords:
@@ -31,12 +33,21 @@ def makeQuery(keywords):
         query_type = 'yes/no'
     
     if "property" in keywords:
-        blob = TextBlob(keywords["property"][0])
+        blob = TextBlob(' '.join(keywords["property"]))
+        if 'influence' in blob:
+            temp = ' '.join(keywords["entity"])
+            keywords["entity"] = keywords["property_attribute"]
+            keywords["property_attribute"] = [temp]
+            
         prop = ' '.join([word.singularize() for word in blob.words])
         prop = property_dict.get(prop, prop)
         if settings.verbose:
             print('property:', prop)
         property_ids = searchEntities(prop, "property")
+        
+        if not property_ids:
+            property_ids = [{'id':searchEntity(prop, 'entity'), 'is_entity':True},
+                             {'id':'P527'}]
         if len(property_ids) > 0:
             property_id = property_ids[0]['id']
     
@@ -45,28 +56,43 @@ def makeQuery(keywords):
     
     # TODO attribute is not always entity, right? needs to be fixed
     if "property_attribute" in keywords:
-        prop_attribute_id = searchEntity(keywords["property_attribute"][0], "entity")
+        addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
+        if keywords["question_id"][0] == 9:
+            # Likely a 'yes/no question'
+            query_type = 'yes/no'
+    
+    if "specification" in keywords:       
+        addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
+        if keywords["question_id"][0] == 7:
+            # Likely a 'X is Y of Z', with Z as required answer.
+            query_type = 'specified'
+    
+    
     
     # Firing the query
     answer = []
     if query_type == 'basic':
-        answer = submitTypeQuery(entity_id, property_ids, 'basic')
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'basic')
         
     elif query_type == 'yes/no':
-        answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'yes/no')
         
     # TODO make query for each type
     elif query_type == 'date':
-        answer = submitTypeQuery(entity_id, property_ids, 'date')
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'date')
         
     elif query_type == 'place':
-        answer = submitTypeQuery(entity_id, property_ids, 'place')
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'place')
         
     elif query_type == 'person':
-        answer = submitTypeQuery(entity_id, property_ids, 'person')
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'person')
         
     elif query_type == 'cause':
-        answer = submitTypeQuery(entity_id, property_ids, 'cause')
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'cause')
+    
+    elif query_type == 'specified':
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'specified')
+        
     # TODO extract how many questions properly
     #elif query_type == 'count':
 
@@ -159,24 +185,31 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
         answer = ['No']
     return answer
 
-def submitTypeQuery(entity_id, property_ids, query_type):
+def submitTypeQuery(entity_id, property_ids, filters, query_type):
     url = 'https://query.wikidata.org/sparql'
-    query = query_dict[query_type][0].format(entity_id)
+    if query_type == 'person':
+        print(property_ids)
+        if not property_ids or not property_ids[0].get('is_entity', False):
+            query = query_dict[query_type][0].format(entity_id, '')
+        else:
+            extra_line = '?ps_ wdt:P106 wd:{0}.'.format(property_ids[0]['id'])
+            query = query_dict[query_type][0].format(entity_id, extra_line)
+    else:
+        query = query_dict[query_type][0].format(entity_id)
     data = []
+    
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
         if settings.verbose:
             print("Problem with the following query:")
             print(query)
             print(traceback.format_exc())
         return []
     
-    
     answers = []
     chosen_property = None
-    
-    processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2])
+    processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2] + filters)
 
     for prop_id in property_ids:
         for item in processed_data:
@@ -185,6 +218,18 @@ def submitTypeQuery(entity_id, property_ids, query_type):
             if ("http://www.wikidata.org/entity/" + prop_id['id'] == item['wd']['value']):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
+    
+    # Desperate case, when no property was found
+    if chosen_property == None:
+        for item in processed_data:
+            answers.append(item['ps_Label']['value'])
+    
+    if query_type == 'yes/no':
+        if not answers:
+            answers = ['No']
+        else:
+            answers = ['Yes']
+        
     if settings.verbose:
         print('chosen property:', chosen_property)
     return answers
@@ -201,6 +246,18 @@ query_dict = {
             
             SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
         }}''', 'wd', []],
+    'specified':['''
+        SELECT ?wd ?ps_Label ?spec {{
+        VALUES (?entity) {{(wd:{0})}}
+        
+        ?entity ?p ?statement .
+        ?statement ?ps ?ps_ .
+        
+        ?wd wikibase:statementProperty ?ps.
+        ?ps_ wdt:P31/wdt:P279 ?spec.
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+    }}''', 'spec', []],
     'date':['''
         SELECT ?wd ?ps_Label{{
         VALUES (?entity) {{(wd:{0})}}
@@ -212,7 +269,7 @@ query_dict = {
         FILTER(DATATYPE(?ps_) = xsd:dateTime).
         
         SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-    }}''','is_date', []],
+    }}''','wd', []],
     'place': ['''
         SELECT ?wd ?ps_Label ?is_place{{
           VALUES (?entity) {{(wd:{0})}}
@@ -234,6 +291,8 @@ query_dict = {
         
           ?wd wikibase:statementProperty ?ps.
           ?ps_ wdt:P31 ?is_human.
+          
+          {1}
         
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
         }}''','is_human', ['http://www.wikidata.org/entity/Q5']],
@@ -249,7 +308,18 @@ query_dict = {
           ?cause_type wdt:P279 ?is_cause.
           
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''','is_cause', ['http://www.wikidata.org/entity/Q179289']]
+        }}''','is_cause', ['http://www.wikidata.org/entity/Q179289']],
+    'yes/no':['''
+        SELECT ?wd ?ps_Label ?ps_ {{
+        VALUES (?entity) {{(wd:{0})}}
+        
+        ?entity ?p ?statement .
+        ?statement ?ps ?ps_ .
+        
+        ?wd wikibase:statementProperty ?ps.
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+    }}''', 'ps_', []]
     }
         
 def filterBy(data, var_id, entities_id):
@@ -258,3 +328,7 @@ def filterBy(data, var_id, entities_id):
         if (not entities_id or item[var_id]['value'] in entities_id):
             new_data.append(item)
     return new_data
+
+def addFilter(filters, f):
+    if f != None:
+        filters.append('http://www.wikidata.org/entity/' + f)
