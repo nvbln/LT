@@ -242,6 +242,21 @@ def syntacticAnalysis(nlp, line):
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
             addToDict(keywords, "specification", getPhraseUntil(question, prep_pos + 2, 9999))
+    elif (nsubj_pos != -1 and root_pos > nsubj_pos and prep_pos > root_pos
+            and pobj_pos > prep_pos):
+            # Likely a Who/What is/are [prep] X question.
+            addToDict(keywords, "question_id", 8)
+            if settings.verbose:
+                print("Who/What is/are [prep] X question.")
+
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos))
+            # Prep won't be a phrase anyway, so better to do it like this.
+            addToDict(keywords, "property", question[prep_pos].text)
+            # These kind of questions are very likely 'part of' questions.
+            addToDict(keywords, "property_backup", "part of")
+
+            if question[0].dep_ == "det" or question[0].dep_ == "nsubj":
+                addToDict(keywords, "question_word", question[0].text)
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
         addToDict(keywords, "question_id", 7)
