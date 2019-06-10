@@ -126,13 +126,18 @@ def syntacticAnalysis(nlp, line):
     ## Get the question types based on the syntactic dependencies found.
     # Check if the sentence contains advmod, nsubj, and root.
     # Check if the order of dependencies is correct.
-    if aux_pos != 0 and advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
+    if aux_pos != 0 and ((advmod_pos == 0 and nsubj_pos > advmod_pos)
+            or (pobj_pos == 0 and nsubj_pos > pobj_pos)) and root_pos > nsubj_pos:
         # Likely a When/what/who is/was/are/did X [verb] question.
         addToDict(keywords,"question_id",1)
 
         if settings.verbose:
             print("When/what/who is/are/did X [verb] question.")
-        addToDict(keywords, "question_word", getPhrase(question, advmod_pos))
+
+        if advmod_pos == 0:
+            addToDict(keywords, "question_word", getPhrase(question, advmod_pos))
+        else: 
+            addToDict(keywords, "question_word", getPhrase(question, pobj_pos))
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
         addToDict(keywords, "property", getPhrase(question, root_pos))
 
