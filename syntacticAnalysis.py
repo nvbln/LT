@@ -104,6 +104,11 @@ def syntacticAnalysis(nlp, line):
         print("Question after date removal:")
         print(question)
 
+    # Probably a misidentification of spacy
+    for word in question:
+        if word.dep_ == "npadvmod":
+            word.dep_ = "nsubj"
+
     # Check for all syntactic dependencies
     advmod_pos = sentenceContains(question, "advmod", 0)
     auxpass_pos = sentenceContains(question, "auxpass", 0)
