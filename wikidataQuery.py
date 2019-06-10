@@ -189,7 +189,7 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
     url = 'https://query.wikidata.org/sparql'
     if query_type == 'person':
         print(property_ids)
-        if not property_ids or not property_ids[0].get('is_entity', False):
+        if not property_ids or not property_ids[0].get('is_entity', False) or not property_ids[0]['id']:
             query = query_dict[query_type][0].format(entity_id, '')
         else:
             extra_line = '?ps_ wdt:P106 wd:{0}.'.format(property_ids[0]['id'])
