@@ -115,6 +115,7 @@ def syntacticAnalysis(nlp, line):
     det_pos = sentenceContains(question, "det", 0)
     dobj_pos = sentenceContains(question, "dobj", 0)
     nsubj_pos = sentenceContains(question, "nsubj", 0)
+    pcomp_pos = sentenceContains(question, "pcomp", 0)
     pobj_pos = sentenceContains(question, "pobj", 0)
     poss_pos = sentenceContains(question, "poss", 0)
     prep_pos = sentenceContains(question, "prep", 0)
@@ -160,7 +161,8 @@ def syntacticAnalysis(nlp, line):
             addToDict(keywords,"question_word", getPhrase(question, advmod_pos))
         elif attr_pos != -1:
             addToDict(keywords, "question_word", getPhrase(question, attr_pos))
-    elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
+    elif (((dobj_pos != -1 and aux_pos > dobj_pos) 
+            or (pcomp_pos != -1 and aux_pos > pcomp_pos)) and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
         addToDict(keywords, "question_id", 3)
@@ -168,7 +170,10 @@ def syntacticAnalysis(nlp, line):
             print("What X did Y [verb] question.")
         
         addToDict(keywords, "question_word", "What")
-        addToDict(keywords,"property", getPhrase(question, dobj_pos))
+        if dobj_pos != -1:
+            addToDict(keywords,"property", getPhrase(question, dobj_pos))
+        else:
+            addToDict(keywords, "property", getPhrase(question, pcomp_pos))
         addToDict(keywords,"entity", getPhrase(question, nsubj_pos))
 
         if attr_pos != -1:
