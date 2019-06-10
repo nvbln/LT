@@ -230,6 +230,8 @@ def syntacticAnalysis(nlp, line):
         # TODO: Take into account that is can also likely be a yes/no
         # question. E.g. X was the Y of Z (right?)
         addToDict(keywords, "question_id", 7)
+        if settings.verbose:
+            print("(remind me,) X was Y of what again? question.")
 
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
         addToDict(keywords,  "property", getPhrase(question, attr_pos))
