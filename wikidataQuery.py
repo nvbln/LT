@@ -57,13 +57,13 @@ def makeQuery(keywords):
     # TODO attribute is not always entity, right? needs to be fixed
     if "property_attribute" in keywords:
         addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
-        if keywords["question_id"][0] == 7:
+        if keywords["question_id"][0] == 9:
             # Likely a 'yes/no question'
             query_type = 'yes/no'
     
     if "specification" in keywords:       
         addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
-        if keywords["question_id"][0] == 9:
+        if keywords["question_id"][0] == 7:
             # Likely a 'X is Y of Z', with Z as required answer.
             query_type = 'specified'
     
