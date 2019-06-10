@@ -33,7 +33,12 @@ def makeQuery(keywords):
         query_type = 'yes/no'
     
     if "property" in keywords:
-        blob = TextBlob(keywords["property"][0])
+        blob = TextBlob(' '.join(keywords["property"]))
+        if 'influence' in blob:
+            temp = ' '.join(keywords["entity"])
+            keywords["entity"] = keywords["property_attribute"]
+            keywords["property_attribute"] = [temp]
+            
         prop = ' '.join([word.singularize() for word in blob.words])
         prop = property_dict.get(prop, prop)
         if settings.verbose:
@@ -54,7 +59,7 @@ def makeQuery(keywords):
     
     if "specification" in keywords:       
         addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
-        if keywords["question_id"][0] == 7:
+        if keywords["question_id"][0] == 9:
             # Likely a 'X is Y of Z', with Z as required answer.
             query_type = 'specified'
     
@@ -187,7 +192,6 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
             print(query)
             print(traceback.format_exc())
         return []
-    
     
     answers = []
     chosen_property = None
