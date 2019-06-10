@@ -123,6 +123,10 @@ def syntacticAnalysis(nlp, line):
     if nsubj_pos == -1:
         nsubj_pos = sentenceContains(question, "nsubjpass", 0)
 
+    # If no aux has been found, try the passive aux.
+    if aux_pos == -1:
+        aux_pos = auxpass_pos
+
     ## Get the question types based on the syntactic dependencies found.
     # Check if the sentence contains advmod, nsubj, and root.
     # Check if the order of dependencies is correct.
