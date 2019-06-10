@@ -46,11 +46,13 @@ def makeQuery(keywords):
     
     # TODO attribute is not always entity, right? needs to be fixed
     if "property_attribute" in keywords:
-        prop_attribute_id = searchEntity(keywords["property_attribute"][0], "entity")
+        addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
+        if keywords["question_id"][0] == 7:
+            # Likely a 'yes/no question'
+            query_type = 'yes/no'
     
     if "specification" in keywords:       
-        filters.append('http://www.wikidata.org/entity/' + 
-                       searchEntity(keywords["specification"][0], "entity"))
+        addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
         if keywords["question_id"][0] == 7:
             # Likely a 'X is Y of Z', with Z as required answer.
             query_type = 'specified'
@@ -62,7 +64,7 @@ def makeQuery(keywords):
         answer = submitTypeQuery(entity_id, property_ids, filters, 'basic')
         
     elif query_type == 'yes/no':
-        answer = submitCheckQuery(entity_id, property_id, prop_attribute_id)
+        answer = submitTypeQuery(entity_id, property_ids, filters, 'yes/no')
         
     # TODO make query for each type
     elif query_type == 'date':
@@ -176,10 +178,9 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
     url = 'https://query.wikidata.org/sparql'
     query = query_dict[query_type][0].format(entity_id)
     data = []
-    print(query)
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
         if settings.verbose:
             print("Problem with the following query:")
             print(query)
@@ -189,7 +190,6 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
     
     answers = []
     chosen_property = None
-    
     processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2] + filters)
 
     for prop_id in property_ids:
@@ -204,6 +204,12 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
     if chosen_property == None:
         for item in processed_data:
             answers.append(item['ps_Label']['value'])
+    
+    if query_type == 'yes/no':
+        if not answers:
+            answers = ['No']
+        else:
+            answers = ['Yes']
         
     if settings.verbose:
         print('chosen property:', chosen_property)
@@ -223,7 +229,7 @@ query_dict = {
         }}''', 'wd', []],
     'specified':['''
         SELECT ?wd ?ps_Label ?spec {{
-        VALUES (?entity) {{(wd:Q315711)}}
+        VALUES (?entity) {{(wd:{0})}}
         
         ?entity ?p ?statement .
         ?statement ?ps ?ps_ .
@@ -244,7 +250,7 @@ query_dict = {
         FILTER(DATATYPE(?ps_) = xsd:dateTime).
         
         SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-    }}''','is_date', []],
+    }}''','wd', []],
     'place': ['''
         SELECT ?wd ?ps_Label ?is_place{{
           VALUES (?entity) {{(wd:{0})}}
@@ -281,7 +287,18 @@ query_dict = {
           ?cause_type wdt:P279 ?is_cause.
           
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
-        }}''','is_cause', ['http://www.wikidata.org/entity/Q179289']]
+        }}''','is_cause', ['http://www.wikidata.org/entity/Q179289']],
+    'yes/no':['''
+        SELECT ?wd ?ps_Label ?ps_ {{
+        VALUES (?entity) {{(wd:{0})}}
+        
+        ?entity ?p ?statement .
+        ?statement ?ps ?ps_ .
+        
+        ?wd wikibase:statementProperty ?ps.
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+    }}''', 'ps_', []]
     }
         
 def filterBy(data, var_id, entities_id):
@@ -290,3 +307,7 @@ def filterBy(data, var_id, entities_id):
         if (not entities_id or item[var_id]['value'] in entities_id):
             new_data.append(item)
     return new_data
+
+def addFilter(filters, f):
+    if f != None:
+        filters.append('http://www.wikidata.org/entity/' + f)
