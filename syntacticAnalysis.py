@@ -37,9 +37,7 @@ def syntacticAnalysis(nlp, line):
             # There should be two dates.
             cc_pos = sentenceContains(question, "cc", latest_prep_pos)
             date1 = getPhraseUntil(question, latest_prep_pos + 1, cc_pos)
-            print(date1)
             date2 = getPhraseUntil(question, cc_pos + 1, 99999)
-            print(date2)
 
             # See if datefinder can exfiltrate them.
             if (len(list(datefinder.find_dates(date1))) == 1
