@@ -37,9 +37,7 @@ def syntacticAnalysis(nlp, line):
             # There should be two dates.
             cc_pos = sentenceContains(question, "cc", latest_prep_pos)
             date1 = getPhraseUntil(question, latest_prep_pos + 1, cc_pos)
-            print(date1)
             date2 = getPhraseUntil(question, cc_pos + 1, 99999)
-            print(date2)
 
             # See if datefinder can exfiltrate them.
             if (len(list(datefinder.find_dates(date1))) == 1
@@ -106,6 +104,11 @@ def syntacticAnalysis(nlp, line):
         print("Question after date removal:")
         print(question)
 
+    # Probably a misidentification of spacy
+    for word in question:
+        if word.dep_ == "npadvmod":
+            word.dep_ = "nsubj"
+
     # Check for all syntactic dependencies
     advmod_pos = sentenceContains(question, "advmod", 0)
     auxpass_pos = sentenceContains(question, "auxpass", 0)
@@ -115,6 +118,7 @@ def syntacticAnalysis(nlp, line):
     det_pos = sentenceContains(question, "det", 0)
     dobj_pos = sentenceContains(question, "dobj", 0)
     nsubj_pos = sentenceContains(question, "nsubj", 0)
+    pcomp_pos = sentenceContains(question, "pcomp", 0)
     pobj_pos = sentenceContains(question, "pobj", 0)
     poss_pos = sentenceContains(question, "poss", 0)
     prep_pos = sentenceContains(question, "prep", 0)
@@ -124,16 +128,25 @@ def syntacticAnalysis(nlp, line):
     if nsubj_pos == -1:
         nsubj_pos = sentenceContains(question, "nsubjpass", 0)
 
+    # If no aux has been found, try the passive aux.
+    if aux_pos == -1:
+        aux_pos = auxpass_pos
+
     ## Get the question types based on the syntactic dependencies found.
     # Check if the sentence contains advmod, nsubj, and root.
     # Check if the order of dependencies is correct.
-    if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
+    if aux_pos != 0 and ((advmod_pos == 0 and nsubj_pos > advmod_pos)
+            or (pobj_pos == 0 and nsubj_pos > pobj_pos)) and root_pos > nsubj_pos:
         # Likely a When/what/who is/was/are/did X [verb] question.
         addToDict(keywords,"question_id",1)
 
         if settings.verbose:
             print("When/what/who is/are/did X [verb] question.")
-        addToDict(keywords, "question_word", getPhrase(question, advmod_pos))
+
+        if advmod_pos == 0:
+            addToDict(keywords, "question_word", getPhrase(question, advmod_pos))
+        else: 
+            addToDict(keywords, "question_word", getPhrase(question, pobj_pos))
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
         addToDict(keywords, "property", getPhrase(question, root_pos))
 
@@ -141,7 +154,7 @@ def syntacticAnalysis(nlp, line):
         # TODO: See if this is possible for other questions as well.
         if prep_pos > nsubj_pos and pobj_pos > prep_pos:
             addToDict(keywords,"specification", getPhrase(question, pobj_pos))
-    elif (root_pos > 0
+    elif (root_pos > 0 and aux_pos != 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
         # Likely an X of Y question.
@@ -160,7 +173,8 @@ def syntacticAnalysis(nlp, line):
             addToDict(keywords,"question_word", getPhrase(question, advmod_pos))
         elif attr_pos != -1:
             addToDict(keywords, "question_word", getPhrase(question, attr_pos))
-    elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
+    elif (((dobj_pos != -1 and aux_pos > dobj_pos) 
+            or (pcomp_pos != -1 and aux_pos > pcomp_pos)) and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
         addToDict(keywords, "question_id", 3)
@@ -168,12 +182,16 @@ def syntacticAnalysis(nlp, line):
             print("What X did Y [verb] question.")
         
         addToDict(keywords, "question_word", "What")
-        addToDict(keywords,"property", getPhrase(question, dobj_pos))
+        if dobj_pos != -1:
+            addToDict(keywords,"property", getPhrase(question, dobj_pos))
+        else:
+            addToDict(keywords, "property", getPhrase(question, pcomp_pos))
         addToDict(keywords,"entity", getPhrase(question, nsubj_pos))
+        addToDict(keywords, "property", getPhrase(question, root_pos))
 
         if attr_pos != -1:
             addToDict(keywords, "question_word", getPhrase(question, attr_pos))
-    elif (root_pos != -1 and poss_pos > root_pos
+    elif (aux_pos != 0 and root_pos != -1 and poss_pos > root_pos
             and case_pos > poss_pos):
         # Likely an X's Y question.
         addToDict(keywords,"question_id", 4)
@@ -196,7 +214,7 @@ def syntacticAnalysis(nlp, line):
 
         elif attr_pos > case_pos:
             addToDict(keywords, "property", getPhrase(question, attr_pos))
-    elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
+    elif aux_pos != 0 and nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
         addToDict(keywords,"question_id",5)
         if settings.verbose:
@@ -222,11 +240,13 @@ def syntacticAnalysis(nlp, line):
         # TODO: Put this tag up for discussion.
         # Back-up property:
         addToDict(keywords, "property_backup", "part of")
-    elif nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
+    elif aux_pos != 0 and nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
         # Likely a '(remind me,) X was Y of what again?' question type.
         # TODO: Take into account that is can also likely be a yes/no
         # question. E.g. X was the Y of Z (right?)
         addToDict(keywords, "question_id", 7)
+        if settings.verbose:
+            print("(remind me,) X was Y of what again? question.")
 
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
         addToDict(keywords,  "property", getPhrase(question, attr_pos))
@@ -237,9 +257,27 @@ def syntacticAnalysis(nlp, line):
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
             addToDict(keywords, "specification", getPhraseUntil(question, prep_pos + 2, 9999))
+    elif (aux_pos != 0 and nsubj_pos != -1 and aux_pos != 0 
+            and root_pos > nsubj_pos and prep_pos > root_pos
+            and pobj_pos > prep_pos):
+            # Likely a Who/What is/are [prep] X question.
+            addToDict(keywords, "question_id", 8)
+            if settings.verbose:
+                print("Who/What is/are [prep] X question.")
+
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos))
+            # Prep won't be a phrase anyway, so better to do it like this.
+            addToDict(keywords, "property", question[prep_pos].text)
+            # These kind of questions are very likely 'part of' questions.
+            addToDict(keywords, "property_backup", "part of")
+
+            if question[0].dep_ == "det" or question[0].dep_ == "nsubj":
+                addToDict(keywords, "question_word", question[0].text)
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
-        addToDict(keywords, "question_id", 7)
+        addToDict(keywords, "question_id", 9)
+        if settings.verbose:
+            print("Yes/no question")
 
         if aux_pos == 0:
             addToDict(keywords, "question_word", getPhrase(question, aux_pos))
