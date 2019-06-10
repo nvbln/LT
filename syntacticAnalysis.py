@@ -187,6 +187,7 @@ def syntacticAnalysis(nlp, line):
         else:
             addToDict(keywords, "property", getPhrase(question, pcomp_pos))
         addToDict(keywords,"entity", getPhrase(question, nsubj_pos))
+        addToDict(keywords, "second_property", getPhrase(question, root_pos))
 
         if attr_pos != -1:
             addToDict(keywords, "question_word", getPhrase(question, attr_pos))
