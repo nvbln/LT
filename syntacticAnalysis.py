@@ -282,7 +282,7 @@ def syntacticAnalysis(nlp, line):
             if settings.verbose:
                 print("Who/What is/are [prep] X question.")
 
-            addToDict(keywords, "entity", getPhrase(question, pobj_pos))
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
             # Prep won't be a phrase anyway, so better to do it like this.
             addToDict(keywords, "property", question[prep_pos].text)
             # These kind of questions are very likely 'part of' questions.
