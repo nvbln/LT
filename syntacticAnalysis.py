@@ -151,14 +151,14 @@ def syntacticAnalysis(nlp, line):
 
         if settings.verbose:
             print("When/what/who is/are/did X [verb] question.")
-        addToDict(keywords, "question_word", getPhrase(question, advmod_pos))
-        addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
-        addToDict(keywords, "property", getPhrase(question, root_pos))
+        addToDict(keywords, "question_word", getPhrase(question, advmod_pos, names))
+        addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
+        addToDict(keywords, "property", getPhrase(question, root_pos, names))
 
         # Add further specification if available.
         # TODO: See if this is possible for other questions as well.
         if prep_pos > nsubj_pos and pobj_pos > prep_pos:
-            addToDict(keywords,"specification", getPhrase(question, pobj_pos))
+            addToDict(keywords,"specification", getPhrase(question, pobj_pos, names))
     elif (root_pos > 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
@@ -166,18 +166,18 @@ def syntacticAnalysis(nlp, line):
         addToDict(keywords, "question_id", 2)
         if settings.verbose:
             print("X of Y question.")
-        addToDict(keywords, "entity", getPhrase(question, pobj_pos))
+        addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
 
         secondAttribute = sentenceContains(question, "attr", root_pos)
         if nsubj_pos != -1:
-            addToDict(keywords, "property", getPhrase(question, nsubj_pos))
+            addToDict(keywords, "property", getPhrase(question, nsubj_pos, names))
         elif secondAttribute != -1:
-            addToDict(keywords, "property", getPhrase(question, secondAttribute))
+            addToDict(keywords, "property", getPhrase(question, secondAttribute, names))
 
         if advmod_pos != -1:
-            addToDict(keywords,"question_word", getPhrase(question, advmod_pos))
+            addToDict(keywords,"question_word", getPhrase(question, advmod_pos, names))
         elif attr_pos != -1:
-            addToDict(keywords, "question_word", getPhrase(question, attr_pos))
+            addToDict(keywords, "question_word", getPhrase(question, attr_pos, names))
     elif (dobj_pos != -1 and aux_pos > dobj_pos and nsubj_pos > aux_pos 
             and root_pos > nsubj_pos):
         # Likely a What X did Y [verb] question.
@@ -186,24 +186,24 @@ def syntacticAnalysis(nlp, line):
             print("What X did Y [verb] question.")
         
         addToDict(keywords, "question_word", "What")
-        addToDict(keywords,"property", getPhrase(question, dobj_pos))
-        addToDict(keywords,"entity", getPhrase(question, nsubj_pos))
+        addToDict(keywords,"property", getPhrase(question, dobj_pos, names))
+        addToDict(keywords,"entity", getPhrase(question, nsubj_pos, names))
 
         if attr_pos != -1:
-            addToDict(keywords, "question_word", getPhrase(question, attr_pos))
+            addToDict(keywords, "question_word", getPhrase(question, attr_pos, names))
     elif (root_pos != -1 and poss_pos > root_pos
             and case_pos > poss_pos):
         # Likely an X's Y question.
         addToDict(keywords,"question_id", 4)
         if settings.verbose:
             print("X's Y question.")
-        addToDict(keywords,"entity", getPhrase(question, poss_pos))
+        addToDict(keywords,"entity", getPhrase(question, poss_pos, names))
 
         if attr_pos == 0:
-            addToDict(keywords, "question_word", getPhrase(question, attr_pos))
+            addToDict(keywords, "question_word", getPhrase(question, attr_pos, names))
             secondAttribute = sentenceContains(question, "attr", case_pos)
             if secondAttribute != -1:
-                addToDict(keywords, "property", getPhrase(question, secondAttribute))
+                addToDict(keywords, "property", getPhrase(question, secondAttribute, names))
             else:
                 # A second attribute could not be found.
                 # Likely a construction like 'X of Y' is present.
@@ -213,19 +213,19 @@ def syntacticAnalysis(nlp, line):
                 addToDict(keywords,"specification", getPhraseUntil(question, prep_pos + 1, 9999))
 
         elif attr_pos > case_pos:
-            addToDict(keywords, "property", getPhrase(question, attr_pos))
+            addToDict(keywords, "property", getPhrase(question, attr_pos, names))
     elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
         addToDict(keywords,"question_id",5)
         if settings.verbose:
             print("What X [verb] Y question.")
 
-        addToDict(keywords, "property", getPhrase(question, nsubj_pos))
-        addToDict(keywords, "entity", getPhrase(question, dobj_pos))
-        addToDict(keywords, "root", getPhrase(question, root_pos))
+        addToDict(keywords, "property", getPhrase(question, nsubj_pos, names))
+        addToDict(keywords, "entity", getPhrase(question, dobj_pos, names))
+        addToDict(keywords, "root", getPhrase(question, root_pos, names))
 
         if attr_pos == 0:
-            addToDict(keywords,"question_word", getPhrase(question, attr_pos))
+            addToDict(keywords,"question_word", getPhrase(question, attr_pos, names))
     elif (det_pos != -1 and nsubj_pos > det_pos and root_pos > nsubj_pos 
             and attr_pos > root_pos):
         # Likely a [Det] X is Y question.
@@ -234,8 +234,8 @@ def syntacticAnalysis(nlp, line):
             print("[Det] X is Y question.")
         
         addToDict(keywords, "question_word", "What")
-        addToDict(keywords, "property", getPhrase(question, nsubj_pos))
-        addToDict(keywords, "entity", getPhrase(question, attr_pos))
+        addToDict(keywords, "property", getPhrase(question, nsubj_pos, names))
+        addToDict(keywords, "entity", getPhrase(question, attr_pos, names))
 
         # TODO: Put this tag up for discussion.
         # Back-up property:
@@ -246,8 +246,8 @@ def syntacticAnalysis(nlp, line):
         # question. E.g. X was the Y of Z (right?)
         addToDict(keywords, "question_id", 7)
 
-        addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
-        addToDict(keywords,  "property", getPhrase(question, attr_pos))
+        addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
+        addToDict(keywords,  "property", getPhrase(question, attr_pos, names))
 
         # TODO: Change 'which' to question word.
         if question[prep_pos + 1].text == 'which':
@@ -260,13 +260,13 @@ def syntacticAnalysis(nlp, line):
         addToDict(keywords, "question_id", 7)
 
         if aux_pos == 0:
-            addToDict(keywords, "question_word", getPhrase(question, aux_pos))
-            addToDict(keywords,  "property", getPhrase(question, root_pos))
-            addToDict(keywords, "property_attribute", getPhrase(question, pobj_pos))
+            addToDict(keywords, "question_word", getPhrase(question, aux_pos, names))
+            addToDict(keywords,  "property", getPhrase(question, root_pos, names))
+            addToDict(keywords, "property_attribute", getPhrase(question, pobj_pos, names))
         elif root_pos == 0:
-            addToDict(keywords,"question_word", getPhrase(question, root_pos))
+            addToDict(keywords,"question_word", getPhrase(question, root_pos, names))
             
-        addToDict(keywords, "entity", getPhrase(question, nsubj_pos))
+        addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
         
     if settings.verbose:
         print(keywords)
@@ -275,12 +275,18 @@ def syntacticAnalysis(nlp, line):
 
 # Gets the syntactic dependency on the given position
 # and all the compounds in front of it.
-def getPhrase(sentence, position):
+def getPhrase(sentence, position, names):
     # TODO: Make effective use of the 'prep' dependency.
     # For example: "United States of America" is one phrase,
     # but it will not be seen as such unless using this dependency.
 
     word = sentence[position]
+
+    # If word is a name, get it from names.
+    name = compareNames(word, names)
+    if name != -1:
+        return name
+
     phrase = ""
     position -= 1
     while (position >= 0 and (sentence[position].dep_ == "compound"
@@ -289,6 +295,13 @@ def getPhrase(sentence, position):
         position -= 1
 
     return phrase + word.text
+
+def compareNames(word, names):
+    for name in names:
+        spaceless_name = name.replace(" ", "")
+        if word.text == spaceless_name:
+            return name
+    return -1
 
 def getPhraseUntil(sentence, start_position, end_position):
     phrase = ""
