@@ -279,7 +279,8 @@ def getPrepPhrase(sentence, position):
             phrase.append(word.text)
         position += 1
         while(position <= len(sentence) and sentence[position].ent_iob_ == "I"):
-            phrase.append(sentence[position].text)
+            if sentence[position].dep_ != "case":
+                phrase.append(sentence[position].text)
             position += 1
         phrase = " ".join(phrase)
     elif word.ent_iob_ == "I":
@@ -289,15 +290,16 @@ def getPrepPhrase(sentence, position):
            phrase.append(sentence[position].text)
        position += 1
        while(position <= len(sentence) and sentence[position].ent_iob_ == "I"):
-           phrase.append(sentence[position].text)
+           if sentence[position].dep_ != "case":
+               phrase.append(sentence[position].text)
            position += 1
        phrase = " ".join(phrase)
     # If it is not part of a named entity, use the dependency subtree to form the phrase
     else:
        for d in word.subtree:
-           # Current phrase boundaries: prepositions (add more if necessary)
-           if d.dep_ == "prep":
-              break
+           # Current phrase boundaries: prepositions and cases (add more if necessary)
+           if d.dep_ == "prep" or d.dep_ == "case":
+               break
            if d.dep_ != "det":
                phrase.append(d.text)
        phrase = " ".join(phrase)
