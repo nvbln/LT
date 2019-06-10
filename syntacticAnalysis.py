@@ -227,7 +227,7 @@ def syntacticAnalysis(nlp, line):
                 # 9999 means to go on until a punctuation is encountered.
                 # This should probably be changed once we implement checking for dates
                 # and such which are often at the end of a sentence.
-                addToDict(keywords,"specification", getPhraseUntil(question, prep_pos + 1, 9999))
+                addToDict(keywords, "property", getPhraseUntil(question, case_pos + 1, 9999))
 
         elif attr_pos > case_pos:
             addToDict(keywords, "property", getPhrase(question, attr_pos, names))
