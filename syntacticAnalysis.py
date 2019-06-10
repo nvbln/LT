@@ -126,7 +126,7 @@ def syntacticAnalysis(nlp, line):
     ## Get the question types based on the syntactic dependencies found.
     # Check if the sentence contains advmod, nsubj, and root.
     # Check if the order of dependencies is correct.
-    if advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
+    if aux_pos != 0 and advmod_pos == 0 and nsubj_pos > advmod_pos and root_pos > nsubj_pos:
         # Likely a When/what/who is/was/are/did X [verb] question.
         addToDict(keywords,"question_id",1)
 
@@ -140,7 +140,7 @@ def syntacticAnalysis(nlp, line):
         # TODO: See if this is possible for other questions as well.
         if prep_pos > nsubj_pos and pobj_pos > prep_pos:
             addToDict(keywords,"specification", getPhrase(question, pobj_pos))
-    elif (root_pos > 0
+    elif (root_pos > 0 and aux_pos != 0
             and (nsubj_pos > root_pos or sentenceContains(question, "attr", root_pos) > root_pos)
             and pobj_pos > root_pos) and not (poss_pos != -1 and case_pos != -1):
         # Likely an X of Y question.
@@ -176,7 +176,7 @@ def syntacticAnalysis(nlp, line):
 
         if attr_pos != -1:
             addToDict(keywords, "question_word", getPhrase(question, attr_pos))
-    elif (root_pos != -1 and poss_pos > root_pos
+    elif (aux_pos != 0 and root_pos != -1 and poss_pos > root_pos
             and case_pos > poss_pos):
         # Likely an X's Y question.
         addToDict(keywords,"question_id", 4)
@@ -199,7 +199,7 @@ def syntacticAnalysis(nlp, line):
 
         elif attr_pos > case_pos:
             addToDict(keywords, "property", getPhrase(question, attr_pos))
-    elif aux_pos == -1 and nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
+    elif aux_pos != 0 and nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
         addToDict(keywords,"question_id",5)
         if settings.verbose:
@@ -225,7 +225,7 @@ def syntacticAnalysis(nlp, line):
         # TODO: Put this tag up for discussion.
         # Back-up property:
         addToDict(keywords, "property_backup", "part of")
-    elif nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
+    elif aux_pos != 0 and nsubj_pos != -1 and root_pos > nsubj_pos and attr_pos > root_pos:
         # Likely a '(remind me,) X was Y of what again?' question type.
         # TODO: Take into account that is can also likely be a yes/no
         # question. E.g. X was the Y of Z (right?)
@@ -242,7 +242,8 @@ def syntacticAnalysis(nlp, line):
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
             addToDict(keywords, "specification", getPhraseUntil(question, prep_pos + 2, 9999))
-    elif (nsubj_pos != -1 and root_pos > nsubj_pos and prep_pos > root_pos
+    elif (aux_pos != 0 and nsubj_pos != -1 and aux_pos != 0 
+            and root_pos > nsubj_pos and prep_pos > root_pos
             and pobj_pos > prep_pos):
             # Likely a Who/What is/are [prep] X question.
             addToDict(keywords, "question_id", 8)
