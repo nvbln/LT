@@ -46,7 +46,7 @@ def makeQuery(keywords):
         property_ids = searchEntities(prop, "property")
         
         if not property_ids:
-            property_ids = [{'id':searchEntity(prop, 'entity'), 'is_entity':True},
+            property_ids = [{'id':str(searchEntity(prop, 'entity')), 'is_entity':True},
                              {'id':'P527'}]
         if len(property_ids) > 0:
             property_id = property_ids[0]['id']
