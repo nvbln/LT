@@ -6,6 +6,7 @@ import json
 import simplejson
 from textblob import TextBlob
 
+# TODO account for band member occupation properties
 # A pre-defined dictionary for difficult terms
 property_dict = {'band members': 'has part', 'members': 'has part',
                   'member': 'has part', 'band member': 'has part',
