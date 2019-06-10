@@ -259,7 +259,9 @@ def syntacticAnalysis(nlp, line):
                 addToDict(keywords, "question_word", question[0].text)
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
-        addToDict(keywords, "question_id", 7)
+        addToDict(keywords, "question_id", 9)
+        if settings.verbose:
+            print("Yes/no question")
 
         if aux_pos == 0:
             addToDict(keywords, "question_word", getPhrase(question, aux_pos))
