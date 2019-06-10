@@ -199,7 +199,7 @@ def syntacticAnalysis(nlp, line):
 
         elif attr_pos > case_pos:
             addToDict(keywords, "property", getPhrase(question, attr_pos))
-    elif nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
+    elif aux_pos == -1 and nsubj_pos != -1 and root_pos > nsubj_pos and dobj_pos > root_pos:
         # Likely a What X [verb] Y question.
         addToDict(keywords,"question_id",5)
         if settings.verbose:
