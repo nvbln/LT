@@ -44,6 +44,10 @@ def makeQuery(keywords):
         if settings.verbose:
             print('property:', prop)
         property_ids = searchEntities(prop, "property")
+        
+        if not property_ids:
+            property_ids = [{'id':searchEntity(prop, 'entity'), 'is_entity':True},
+                             {'id':'P527'}]
         if len(property_ids) > 0:
             property_id = property_ids[0]['id']
     
@@ -62,6 +66,7 @@ def makeQuery(keywords):
         if keywords["question_id"][0] == 9:
             # Likely a 'X is Y of Z', with Z as required answer.
             query_type = 'specified'
+    
     
     
     # Firing the query
@@ -182,8 +187,17 @@ def submitCheckQuery(entity_id, property_id, attribute_id):
 
 def submitTypeQuery(entity_id, property_ids, filters, query_type):
     url = 'https://query.wikidata.org/sparql'
-    query = query_dict[query_type][0].format(entity_id)
+    if query_type == 'person':
+        print(property_ids)
+        if not property_ids or not property_ids[0].get('is_entity', False):
+            query = query_dict[query_type][0].format(entity_id, '')
+        else:
+            extra_line = '?ps_ wdt:P106 wd:{0}.'.format(property_ids[0]['id'])
+            query = query_dict[query_type][0].format(entity_id, extra_line)
+    else:
+        query = query_dict[query_type][0].format(entity_id)
     data = []
+    
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
     except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
@@ -277,6 +291,8 @@ query_dict = {
         
           ?wd wikibase:statementProperty ?ps.
           ?ps_ wdt:P31 ?is_human.
+          
+          {1}
         
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
         }}''','is_human', ['http://www.wikidata.org/entity/Q5']],
