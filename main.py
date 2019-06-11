@@ -174,10 +174,14 @@ def main(argv, nlp):
         if settings.verbose:
             print("Loading SpaCy library...")
         nlp = spacy.load('en')
-
-    print("State a question:")
+    
+    if settings.verbose:
+        print("State a question:")
     for line in sys.stdin:
         line = line.rstrip()
+        
+        idn = int(line.split()[0])
+        line = ' '.join(line.split()[1:])
 
         # Finish the program when typing exit.
         if line == "exit":
@@ -185,10 +189,10 @@ def main(argv, nlp):
 
         # Evaluate the question and get the answer.
         answers = evaluateQuestion(nlp, line)
-
-        for answer in answers:
-            print(answer)
-        print("State a question:")
+        
+        print(idn, '\t'.join(answers))
+        if settings.verbose:
+            print("State a question:")
 
 if __name__ == "__main__":
     nlp = None
