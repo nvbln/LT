@@ -311,8 +311,11 @@ def syntacticAnalysis(nlp, line, with_names):
 
     if (aux_pos != 0 and advmod_pos == 0 and question[0].text.lower() == "how"
         and question[1].text.lower() == "many"):
-        # Likely a how/many question.
-        addToDict(keywords, "property", getPhrase(question, dobj_pos, names))
+        # Likely a how many question.
+        # Do not use getPhrase in this case
+        # because it will also include 'many'.
+        addToDict(keywords, "property", question[dobj_pos].text)
+        addToDict(keywords, "question_word", "many")
         
     if settings.verbose:
         print(keywords)
