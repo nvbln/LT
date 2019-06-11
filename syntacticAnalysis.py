@@ -11,6 +11,9 @@ WN_ADJECTIVE_SATELLITE = 's'
 WN_ADVERB = 'r'
 
 def syntacticAnalysis(nlp, line, with_names):
+    line = line.strip()
+    if line[-1] != "?":
+        line += "?"
     question = nlp(line)
 
     keywords = {}
