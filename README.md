@@ -21,5 +21,5 @@ The following people have been part of this development:
   - Run the commands `import nltk` and `nltk.download()` in a Python3 terminal
   - In the window that appears, make sure that the add-on with the identifier `wordnet` in the `Corpora` list is installed
 - Datefinder (can be installed by running `pip3 install datefinder`)
-- Textblob (can be installed by running `pip3 install text blob` and then `python3 -m textblob.download_corpora`)
+- Textblob (can be installed by running `pip3 install textblob` and then `python3 -m textblob.download_corpora`)
 - Simplejson (can be installed by running `pip3 install simplejson`)
