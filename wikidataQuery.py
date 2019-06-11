@@ -16,8 +16,8 @@ property_dict = {'band members': 'has part', 'members': 'has part',
                   'album':'part of'}
 
 # List of w-words, feel free to add any words I forgot
-w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
-                'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
+w_words_dict = {'what':'basic', 'who':'person', 'when':'date', 'where':'place',
+                'why':'cause', 'how':'cause', 'which':'basic', 'how many':'count'}
 
 def makeQuery(keywords):
     entity_id = []
@@ -28,7 +28,7 @@ def makeQuery(keywords):
     
     # Identify query type
     if "question_word" in keywords:
-        query_type = w_words_dict.get(keywords["question_word"][0], 'yes/no')
+        query_type = w_words_dict.get(keywords["question_word"][0].lower(), 'yes/no')
     else:
         query_type = 'yes/no'
     
