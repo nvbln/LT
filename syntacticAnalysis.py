@@ -313,6 +313,8 @@ def syntacticAnalysis(nlp, line, with_names):
     if (aux_pos != 0 and advmod_pos == 0 and question[0].text.lower() == "how"
         and question[1].text.lower() == "many"):
         # Likely a how many question.
+        if settings.verbose:
+            print("How many question.")
 
         nsubj2_pos = sentenceContains(question, "nsubj", nsubj_pos + 1)
 
@@ -326,6 +328,14 @@ def syntacticAnalysis(nlp, line, with_names):
             # First reset the dictionary for the entity keyword.
             keywords["entity"] = []
             addToDict(keywords, "entity", getPhrase(question, nsubj2_pos, names))
+        elif pobj_pos != -1:
+            # First reset the dictionary for the property keyword.
+            keywords["property"] = []
+            addToDict(keywords, "property", question[nsubj_pos].text)
+            
+            # First reset the dictionary for the entity keyword.
+            keywords["entity"] = []
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
         addToDict(keywords, "question_word", "many")
         
     if settings.verbose:
