@@ -33,12 +33,7 @@ def makeQuery(keywords):
         query_type = 'yes/no'
     
     if "property" in keywords:
-        blob = TextBlob(' '.join(keywords["property"]))
-        if 'influence' in blob:
-            temp = ' '.join(keywords["entity"])
-            keywords["entity"] = keywords["property_attribute"]
-            keywords["property_attribute"] = [temp]
-            
+        blob = TextBlob(keywords["property"][0])
         prop = ' '.join([word.singularize() for word in blob.words])
         prop = property_dict.get(prop, prop)
         if settings.verbose:
@@ -206,6 +201,7 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
             print(query)
             print(traceback.format_exc())
         return []
+    
     
     answers = []
     chosen_property = None
