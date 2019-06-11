@@ -295,6 +295,14 @@ def syntacticAnalysis(nlp, line, with_names):
 
             if question[0].dep_ == "det" or question[0].dep_ == "nsubj":
                 addToDict(keywords, "question_word", question[0].text)
+    # Try to pick up some leftover questions
+    elif (dobj_pos != -1 and (nsubj_pos != -1 or pobj_pos != -1)):
+        addToDict(keywords, "question_word", "What")
+        if nsubj_pos != -1:
+            addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
+        else:
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
+        addToDict(keywords, "property", getPhrase(question, dobj_pos, names))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
         addToDict(keywords, "question_id", 9)
