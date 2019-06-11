@@ -327,6 +327,14 @@ def syntacticAnalysis(nlp, line, with_names):
             # First reset the dictionary for the entity keyword.
             keywords["entity"] = []
             addToDict(keywords, "entity", getPhrase(question, nsubj2_pos, names))
+        elif pobj_pos != -1:
+            # First reset the dictionary for the property keyword.
+            keywords["property"] = []
+            addToDict(keywords, "property", question[nsubj_pos].text)
+            
+            # First reset the dictionary for the entity keyword.
+            keywords["entity"] = []
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
         addToDict(keywords, "question_word", "many")
         
     if settings.verbose:
