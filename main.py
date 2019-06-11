@@ -12,9 +12,10 @@ def printHelp():
     print("Available arguments:")
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
-    print("-a, --atest		  Evaluates the program based on the adjusted test questions.")
+    print("-a, --atest		Evaluates the program based on the adjusted test questions.")
     print("-w, --wrapper    Does not load NLP.")
     print("-v, --verbose    Verbose mode. Prints debugging messages about it's progress.")
+    print("-f, --file       Specify the file that the questions should be read from.")
 
 def evaluateQuestion(nlp, line):
     # Input here the process for answering the question
@@ -32,7 +33,7 @@ def evaluateTestQuestions(test_choice):
         local_verbose = True
         settings.verbose = False
 
-    nlp = spacy.load('en_core_web_md')
+    nlp = spacy.load('en')
     
     if test_choice == 0:
         file = "all_questions_and_answers.tsv"
@@ -142,8 +143,8 @@ def main(argv, nlp):
     argument_list = full_cmd_arguments[1:]
     
     # Argument options: help, test
-    unix_options = "htawv"
-    gnu_options = ["help", "test", "atest", "wrapper", "verbose"]
+    unix_options = "htawvf:"
+    gnu_options = ["help", "test", "atest", "wrapper", "verbose", "file="]
 
     try:
         arguments, values = getopt.getopt(argument_list, unix_options, gnu_options)
@@ -170,10 +171,9 @@ def main(argv, nlp):
             load_nlp = False        
         elif current_argument in ("-v", "--verbose"):
             settings.verbose = True
-        else:
+        elif current_argument in ("-f", "--file"):
             is_file = True
-            fname = current_argument
-            
+            fname = current_value
 
     if test_questions:
         evaluateTestQuestions(test_choice)
@@ -211,7 +211,7 @@ def main(argv, nlp):
                     answers[i] = struct_time.strftime('%d %B %Y')
                 except ValueError:
                     # Apparently it is not a datetime object. Continue as normal.
-                    answer = answer
+                    continue
             
             if settings.verbose:
                 for answer in answers:

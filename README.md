@@ -23,3 +23,9 @@ The following people have been part of this development:
 - Datefinder (can be installed by running `pip3 install datefinder`)
 - Textblob (can be installed by running `pip3 install textblob` and then `python3 -m textblob.download_corpora`)
 - Simplejson (can be installed by running `pip3 install simplejson`)
+
+## How to run this system:
+- Normal questions can be put via the prompt when running ```python3 main.py```.
+- Question files can be entered using ```python3 main.py --file=<filename>```.
+In both scenarios, the questions must be preceded by an id (e.g. 1 <tab> <question>).
+In order to enter questions without id, use ```python3 main.py --verbose```.
