@@ -4,6 +4,8 @@ import getopt, sys, spacy
 import syntacticAnalysis as s
 import wikidataQuery as q
 import settings
+import datetime
+import time
 import csv
 
 def printHelp():
@@ -190,6 +192,15 @@ def main(argv, nlp):
 
         # Evaluate the question and get the answer.
         answers = evaluateQuestion(nlp, line)
+        for i in range(len(answers)):
+            # If the answers are a date, print it nicely.
+            try:
+                struct_time = datetime.datetime.strptime(answers[i],
+                              '%Y-%m-%dT%H:%M:%SZ')
+                answers[i] = struct_time.strftime('%d %B %Y')
+            except ValueError:
+                # Apparently it is not a datetime object. Continue as normal.
+                answer = answer
         
         if settings.verbose:
             for answer in answers:
