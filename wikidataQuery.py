@@ -20,42 +20,51 @@ w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
                 'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
 
 def makeQuery(keywords):
-    property_id = []
     entity_id = []
-    prop_attribute_id = []
     property_ids = []
     filters = []
     
     # Querying for IRIs
+    
+    # Identify query type
     if "question_word" in keywords:
         query_type = w_words_dict.get(keywords["question_word"][0], 'yes/no')
     else:
         query_type = 'yes/no'
     
+    # Get list of possible properties
     if "property" in keywords:
+        
+        # Singularize property, if it's a noun
         blob = TextBlob(keywords["property"][0])
         prop = ' '.join([word.singularize() for word in blob.words])
+        
+        # Replace property, if it's a defficult one
         prop = property_dict.get(prop, prop)
         if settings.verbose:
             print('property:', prop)
+        
+        # Try to look for properties
         property_ids = searchEntities(prop, "property")
         
+        # If no properties found, it could be occupation of a member in the group
         if not property_ids:
             property_ids = [{'id':str(searchEntity(prop, 'entity')), 'is_entity':True},
                              {'id':'P527'}]
-        if len(property_ids) > 0:
-            property_id = property_ids[0]['id']
     
+    # Get entity IRI
     if "entity" in keywords:        
         entity_id = searchEntity(keywords["entity"][0], "entity")
     
-    # TODO attribute is not always entity, right? needs to be fixed
+    # Add filters from question
     if "property_attribute" in keywords:
         addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
         if keywords["question_id"][0] == 9:
             # Likely a 'yes/no question'
+            # ('X is Y of Z', with (Z == property_attribute)? as required answer.)
             query_type = 'yes/no'
     
+    # Add filters from questions
     if "specification" in keywords:       
         addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
         if keywords["question_id"][0] == 7:
@@ -65,28 +74,7 @@ def makeQuery(keywords):
     
     
     # Firing the query
-    answer = []
-    if query_type == 'basic':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'basic')
-        
-    elif query_type == 'yes/no':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'yes/no')
-        
-    # TODO make query for each type
-    elif query_type == 'date':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'date')
-        
-    elif query_type == 'place':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'place')
-        
-    elif query_type == 'person':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'person')
-        
-    elif query_type == 'cause':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'cause')
-    
-    elif query_type == 'specified':
-        answer = submitTypeQuery(entity_id, property_ids, filters, 'specified')
+    answer = submitTypeQuery(entity_id, property_ids, filters, query_type)
         
     # TODO extract how many questions properly
     #elif query_type == 'count':
@@ -126,72 +114,25 @@ def searchEntities(entity, string_type):
     # Return all the entities
     return json['search']
 
-# Creates a query and returns the answer(s) on that query.
-def submitQuery(entity_id, property_id):
-    url = 'https://query.wikidata.org/sparql'
-    query = '''
-        SELECT ?itemLabel
-        WHERE
-        {{
-            wd:{0} wdt:{1} ?item.
-            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".}}
-        }}
-        '''.format(entity_id, property_id)
-
-    try:
-        data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    except json.decoder.JSONDecodeError:
-        if settings.verbose:
-            print("Problem with the following query:")
-            print(query)
-            print(traceback.format_exc())
-        return []
-    
-    answers = []
-    for item in data['results']['bindings']:
-        for var in item :
-            answers.append(item[var]['value'])
-    return answers
-    
-# Creates a query that checks whether the given property
-# has appropriate attribute and returns the yes/no answer on that query.
-def submitCheckQuery(entity_id, property_id, attribute_id):
-    url = 'https://query.wikidata.org/sparql'
-    query = '''
-        ASK {{
-            wd:{0} wdt:{1} ?attribute .
-            FILTER(?attribute = wd:{2})
-        }}
-        '''.format(entity_id, property_id, attribute_id)
-
-    try:
-        data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
-        if settings.verbose:
-            print("Problem with the following query:")
-            print(query)
-            print(traceback.format_exc())
-        return []
-    
-    answer = []
-    if data['boolean'] == True:
-        answer = ['Yes']
-    else:
-        answer = ['No']
-    return answer
-
 def submitTypeQuery(entity_id, property_ids, filters, query_type):
     url = 'https://query.wikidata.org/sparql'
+    
+    # If it's a 'who'-question
     if query_type == 'person':
+        # Format the query without adding extra line for standard property
         if not property_ids or not property_ids[0].get('is_entity', False) or not property_ids[0]['id']:
             query = query_dict[query_type][0].format(entity_id, '')
+        # If the property is member's occupation, add extra line to account for that
         else:
             extra_line = '?ps_ wdt:P106 wd:{0}.'.format(property_ids[0]['id'])
             query = query_dict[query_type][0].format(entity_id, extra_line)
     else:
+        # Otherwise the query formatting is generalized
         query = query_dict[query_type][0].format(entity_id)
+    
     data = []
     
+    # Try to fire a query
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
     except (json.decoder.JSONDecodeError, simplejson.errors.JSONDecodeError):
@@ -204,8 +145,13 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
     
     answers = []
     chosen_property = None
+    
+    # Filter data with custom and default filters
+    # Variable by which we filter is in query_dict[query_type][1]
+    # Values by which we filter are in query_dict[query_type][2] + filters
     processed_data = filterBy(data, query_dict[query_type][1], query_dict[query_type][2] + filters)
-
+    
+    # Check what property is found in all filtered properties of the entity
     for prop_id in property_ids:
         for item in processed_data:
             if (chosen_property != None and item['wd']['value'] != chosen_property):
@@ -214,11 +160,12 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
                 answers.append(item['ps_Label']['value'])
                 chosen_property = "http://www.wikidata.org/entity/" + prop_id['id']
     
-    # Desperate case, when no property was found
+    # Desperate case, when no property was found print out all the filtered values
     if chosen_property == None:
         for item in processed_data:
             answers.append(item['ps_Label']['value'])
     
+    # Optionally, convert answer to binary
     if query_type == 'yes/no':
         if not answers:
             answers = ['No']
@@ -319,11 +266,16 @@ query_dict = {
         
 def filterBy(data, var_id, entities_id):
     new_data = []
+    
+    # Look through all values of var_id, return only
+    # item with values available in entities_id
     for item in data['results']['bindings']:
         if (not entities_id or item[var_id]['value'] in entities_id):
             new_data.append(item)
     return new_data
 
 def addFilter(filters, f):
+    
+    # If there is a filter to append, append it
     if f != None:
         filters.append('http://www.wikidata.org/entity/' + f)
