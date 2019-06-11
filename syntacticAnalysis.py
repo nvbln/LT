@@ -10,6 +10,8 @@ WN_ADJECTIVE = 'a'
 WN_ADJECTIVE_SATELLITE = 's'
 WN_ADVERB = 'r'
 
+w_words_list = {'What', 'Who', 'When', 'Where', 'Why', 'How', 'Which', 'How many'}
+
 def syntacticAnalysis(nlp, line, with_names):
     line = line.strip()
     if line[-1] != "?":
@@ -272,8 +274,7 @@ def syntacticAnalysis(nlp, line, with_names):
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
         addToDict(keywords,  "property", getPhrase(question, attr_pos, names))
 
-        # TODO: Change 'which' to question word.
-        if question[prep_pos + 1].text == 'which':
+        if question[prep_pos + 1].text.lower() in [x.lower() for x in w_words_list]:
             # 9999 means to go on until a punctuation is encountered.
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
@@ -308,6 +309,34 @@ def syntacticAnalysis(nlp, line, with_names):
             addToDict(keywords,"question_word", getPhrase(question, root_pos, names))
             
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
+
+    if (aux_pos != 0 and advmod_pos == 0 and question[0].text.lower() == "how"
+        and question[1].text.lower() == "many"):
+        # Likely a how many question.
+        if settings.verbose:
+            print("How many question.")
+
+        nsubj2_pos = sentenceContains(question, "nsubj", nsubj_pos + 1)
+
+        if dobj_pos != -1:
+            # Do not use getPhrase in this case
+            # because it will also include 'many'.
+            addToDict(keywords, "property", question[dobj_pos].text)
+        elif nsubj_pos != -1 and nsubj2_pos != -1:
+            addToDict(keywords, "property", question[nsubj_pos].text)
+
+            # First reset the dictionary for the entity keyword.
+            keywords["entity"] = []
+            addToDict(keywords, "entity", getPhrase(question, nsubj2_pos, names))
+        elif pobj_pos != -1:
+            # First reset the dictionary for the property keyword.
+            keywords["property"] = []
+            addToDict(keywords, "property", question[nsubj_pos].text)
+            
+            # First reset the dictionary for the entity keyword.
+            keywords["entity"] = []
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
+        addToDict(keywords, "question_word", "many")
         
     if settings.verbose:
         print("Keywords:")

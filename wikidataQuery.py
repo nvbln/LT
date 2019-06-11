@@ -17,8 +17,8 @@ property_dict = {'band members': 'has part', 'members': 'has part',
                   'album':'part of'}
 
 # List of w-words, feel free to add any words I forgot
-w_words_dict = {'What':'basic', 'Who':'person', 'When':'date', 'Where':'place',
-                'Why':'cause', 'How':'cause', 'Which':'basic', 'How many':'count'}
+w_words_dict = {'what':'basic', 'who':'person', 'when':'date', 'where':'place',
+                'why':'cause', 'how':'cause', 'which':'basic', 'how many':'count'}
 
 def makeQuery(keywords):
     entity_id = []
@@ -29,7 +29,9 @@ def makeQuery(keywords):
     
     # Identify query type
     if "question_word" in keywords:
-        query_type = w_words_dict.get(keywords["question_word"][0], 'yes/no')
+        query_type = w_words_dict.get(keywords["question_word"][0].lower(), 'yes/no')
+        if len(keywords["question_word"]) > 1 and keywords["question_word"][1] == 'many':
+            query_type = 'count'
     else:
         query_type = 'yes/no'
     
@@ -59,17 +61,17 @@ def makeQuery(keywords):
     
     # Add filters from question
     if "property_attribute" in keywords:
-        addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
         if keywords["question_id"][0] == 9:
             # Likely a 'yes/no question'
             # ('X is Y of Z', with (Z == property_attribute)? as required answer.)
+            addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
             query_type = 'yes/no'
     
     # Add filters from questions
     if "specification" in keywords:       
-        addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
         if keywords["question_id"][0] == 7:
             # Likely a 'X is Y of Z', with Z as required answer.
+            addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
             query_type = 'specified'
     
     qualifiers = []
@@ -86,9 +88,6 @@ def makeQuery(keywords):
 
     # Firing the query
     answer = submitTypeQuery(entity_id, property_ids, filters, query_type, qualifiers)
-        
-    # TODO extract how many questions properly
-    #elif query_type == 'count':
 
     return answer
 
@@ -125,6 +124,7 @@ def searchEntities(entity, string_type):
     # Return all the entities
     return json['search']
 
+
 def submitTypeQuery(entity_id, property_ids, filters, query_type, qualifiers):
     url = 'https://query.wikidata.org/sparql'
     
@@ -136,7 +136,7 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type, qualifiers):
         ?statement pq:P580 ?startTime .
         ?statement pq:P582 ?endTime .
         '''
-    
+
     # If it's a 'who'-question
     if query_type == 'person':
         # Format the query without adding extra line for standard property
@@ -149,7 +149,8 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type, qualifiers):
     else:
         # Otherwise the query formatting is generalized
         query = query_dict[query_type][0].format(qualifierVariables, entity_id, qualifierLines)
-    
+
+    data = []
     # Try to fire a query
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
@@ -216,6 +217,11 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type, qualifiers):
             answers = ['No']
         else:
             answers = ['Yes']
+    elif query_type == 'count':
+        if not (len(answers) == 1 and answers[0].isdigit()):
+            # The property does not give number, we have to count manually
+            answers = [str(len(answers))]
+            
         
     if settings.verbose:
         print('chosen property:', chosen_property)
@@ -230,6 +236,17 @@ query_dict = {
             ?statement ?ps ?ps_ .
             {2}
                         
+            ?wd wikibase:statementProperty ?ps.
+            
+            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}''', 'wd', []],
+    'count':['''
+        SELECT ?wd ?ps_Label {{
+            VALUES (?entity) {{(wd:{0})}}
+            
+            ?entity ?p ?statement .
+            ?statement ?ps ?ps_ .
+            
             ?wd wikibase:statementProperty ?ps.
             
             SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
