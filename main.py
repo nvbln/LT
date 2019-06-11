@@ -16,7 +16,7 @@ def printHelp():
 
 def evaluateQuestion(nlp, line):
     # Input here the process for answering the question
-    keywords = s.syntacticAnalysis(nlp, line)
+    keywords = s.syntacticAnalysis(nlp, line, True)
 
     # Test keywords
     return q.makeQuery(keywords)

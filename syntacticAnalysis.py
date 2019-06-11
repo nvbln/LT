@@ -10,7 +10,7 @@ WN_ADJECTIVE = 'a'
 WN_ADJECTIVE_SATELLITE = 's'
 WN_ADVERB = 'r'
 
-def syntacticAnalysis(nlp, line):
+def syntacticAnalysis(nlp, line, with_names):
     question = nlp(line)
 
     keywords = {}
@@ -18,20 +18,21 @@ def syntacticAnalysis(nlp, line):
     names = []
 
     # Retrieve the names from the question.
-    new_line = line
-    for word in question:
-        # It's the start of a new name.
-        if word.ent_iob_ == "B":
-            names.append(word.text)
-        # It's the continuation of a name.
-        elif word.ent_iob_ == "I" and word.text != "'s":
-            names[-1] += " " + word.text
-            new_line = new_line.replace(" " + word.text, word.text, 1)
-    question = nlp(new_line)
+    if with_names:
+        new_line = line
+        for word in question:
+            # It's the start of a new name.
+            if word.ent_iob_ == "B":
+                names.append(word.text)
+            # It's the continuation of a name.
+            elif word.ent_iob_ == "I" and word.text != "'s":
+                names[-1] += " " + word.text
+                new_line = new_line.replace(" " + word.text, word.text, 1)
+        question = nlp(new_line)
 
-    if settings.verbose:
-        print("Question after name replacement:")
-        print(question)
+        if settings.verbose:
+            print("Question after name replacement:")
+            print(question)
 
     # Check if the sentence contains a date (and remove it).
     # TODO: Clean up code.
@@ -307,6 +308,11 @@ def syntacticAnalysis(nlp, line):
         
     if settings.verbose:
         print(keywords)
+
+    if ((len(keywords) == 0 or (len(keywords) < 2 and "question_word" in keywords))
+            and with_names):
+        # It did not fit any categories, try again without names.
+        keywords = syntacticAnalysis(nlp, line, False)
 
     return keywords
 
