@@ -10,6 +10,8 @@ WN_ADJECTIVE = 'a'
 WN_ADJECTIVE_SATELLITE = 's'
 WN_ADVERB = 'r'
 
+w_words_list = {'What', 'Who', 'When', 'Where', 'Why', 'How', 'Which', 'How many'}
+
 def syntacticAnalysis(nlp, line, with_names):
     line = line.strip()
     if line[-1] != "?":
@@ -272,8 +274,7 @@ def syntacticAnalysis(nlp, line, with_names):
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
         addToDict(keywords,  "property", getPhrase(question, attr_pos, names))
 
-        # TODO: Change 'which' to question word.
-        if question[prep_pos + 1].text == 'which':
+        if question[prep_pos + 1].text.lower() in [x.lower() for x in w_words_list]:
             # 9999 means to go on until a punctuation is encountered.
             # This should probably be changed once we implement checking for dates
             # and such which are often at the end of a sentence.
