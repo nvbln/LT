@@ -29,6 +29,8 @@ def makeQuery(keywords):
     # Identify query type
     if "question_word" in keywords:
         query_type = w_words_dict.get(keywords["question_word"][0].lower(), 'yes/no')
+        if len(keywords["question_word"]) > 1 and keywords["question_word"][1] == 'many':
+            query_type = 'count'
     else:
         query_type = 'yes/no'
     
@@ -75,9 +77,6 @@ def makeQuery(keywords):
     
     # Firing the query
     answer = submitTypeQuery(entity_id, property_ids, filters, query_type)
-        
-    # TODO extract how many questions properly
-    #elif query_type == 'count':
 
     return answer
 
@@ -171,6 +170,11 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
             answers = ['No']
         else:
             answers = ['Yes']
+    elif query_type == 'count':
+        if not (len(answers) == 1 and answers[0].isdigit()):
+            # The property does not give number, we have to count manually
+            answers = [str(len(answers))]
+            
         
     if settings.verbose:
         print('chosen property:', chosen_property)
@@ -178,6 +182,17 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
 
 query_dict = {
     'basic':['''
+        SELECT ?wd ?ps_Label {{
+            VALUES (?entity) {{(wd:{0})}}
+            
+            ?entity ?p ?statement .
+            ?statement ?ps ?ps_ .
+            
+            ?wd wikibase:statementProperty ?ps.
+            
+            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" }}
+        }}''', 'wd', []],
+    'count':['''
         SELECT ?wd ?ps_Label {{
             VALUES (?entity) {{(wd:{0})}}
             
