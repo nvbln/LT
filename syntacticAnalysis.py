@@ -11,28 +11,14 @@ WN_ADJECTIVE_SATELLITE = 's'
 WN_ADVERB = 'r'
 
 def syntacticAnalysis(nlp, line, with_names):
+    line = line.strip()
+    if line[-1] != "?":
+        line += "?"
     question = nlp(line)
 
     keywords = {}
 
     names = []
-
-    # Retrieve the names from the question.
-    if with_names:
-        new_line = line
-        for word in question:
-            # It's the start of a new name.
-            if word.ent_iob_ == "B":
-                names.append(word.text)
-            # It's the continuation of a name.
-            elif word.ent_iob_ == "I" and word.text != "'s":
-                names[-1] += " " + word.text
-                new_line = new_line.replace(" " + word.text, word.text, 1)
-        question = nlp(new_line)
-
-        if settings.verbose:
-            print("Question after name replacement:")
-            print(question)
 
     # Check if the sentence contains a date (and remove it).
     # TODO: Clean up code.
@@ -122,7 +108,24 @@ def syntacticAnalysis(nlp, line, with_names):
     if settings.verbose:
         print("Question after date removal:")
         print(question)
+    
+    # Retrieve the names from the question.
+    if with_names:
+        new_line = line
+        for word in question:
+            # It's the start of a new name.
+            if word.ent_iob_ == "B":
+                names.append(word.text)
+            # It's the continuation of a name.
+            elif word.ent_iob_ == "I" and word.text != "'s":
+                names[-1] += " " + word.text
+                new_line = new_line.replace(" " + word.text, word.text, 1)
+        question = nlp(new_line)
 
+        if settings.verbose:
+            print("Question after name replacement:")
+            print(question)
+    
     # Probably a misidentification of spacy
     for word in question:
         if word.dep_ == "npadvmod":
@@ -307,6 +310,7 @@ def syntacticAnalysis(nlp, line, with_names):
         addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
         
     if settings.verbose:
+        print("Keywords:")
         print(keywords)
 
     if ((len(keywords) == 0 or (len(keywords) < 2 and "question_word" in keywords))
