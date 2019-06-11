@@ -22,23 +22,6 @@ def syntacticAnalysis(nlp, line, with_names):
 
     names = []
 
-    # Retrieve the names from the question.
-    if with_names:
-        new_line = line
-        for word in question:
-            # It's the start of a new name.
-            if word.ent_iob_ == "B":
-                names.append(word.text)
-            # It's the continuation of a name.
-            elif word.ent_iob_ == "I" and word.text != "'s":
-                names[-1] += " " + word.text
-                new_line = new_line.replace(" " + word.text, word.text, 1)
-        question = nlp(new_line)
-
-        if settings.verbose:
-            print("Question after name replacement:")
-            print(question)
-
     # Check if the sentence contains a date (and remove it).
     # TODO: Clean up code.
     # TODO: Check if the date is not between puncts. This likely means that
@@ -127,7 +110,24 @@ def syntacticAnalysis(nlp, line, with_names):
     if settings.verbose:
         print("Question after date removal:")
         print(question)
+    
+    # Retrieve the names from the question.
+    if with_names:
+        new_line = line
+        for word in question:
+            # It's the start of a new name.
+            if word.ent_iob_ == "B":
+                names.append(word.text)
+            # It's the continuation of a name.
+            elif word.ent_iob_ == "I" and word.text != "'s":
+                names[-1] += " " + word.text
+                new_line = new_line.replace(" " + word.text, word.text, 1)
+        question = nlp(new_line)
 
+        if settings.verbose:
+            print("Question after name replacement:")
+            print(question)
+    
     # Probably a misidentification of spacy
     for word in question:
         if word.dep_ == "npadvmod":
@@ -295,6 +295,14 @@ def syntacticAnalysis(nlp, line, with_names):
 
             if question[0].dep_ == "det" or question[0].dep_ == "nsubj":
                 addToDict(keywords, "question_word", question[0].text)
+    # Try to pick up some leftover questions
+    elif (aux_pos != 0 and dobj_pos != -1 and (nsubj_pos != -1 or pobj_pos != -1)):
+        addToDict(keywords, "question_word", "What")
+        if nsubj_pos != -1:
+            addToDict(keywords, "entity", getPhrase(question, nsubj_pos, names))
+        else:
+            addToDict(keywords, "entity", getPhrase(question, pobj_pos, names))
+        addToDict(keywords, "property", getPhrase(question, dobj_pos, names))
     elif root_pos == 0 or aux_pos == 0:
         # Likely a yes/no question
         addToDict(keywords, "question_id", 9)
@@ -339,6 +347,7 @@ def syntacticAnalysis(nlp, line, with_names):
         addToDict(keywords, "question_word", "many")
         
     if settings.verbose:
+        print("Keywords:")
         print(keywords)
 
     if ((len(keywords) == 0 or (len(keywords) < 2 and "question_word" in keywords))

@@ -242,7 +242,7 @@ def main(argv, nlp):
                     answers[i] = struct_time.strftime('%d %B %Y')
                 except ValueError:
                     # Apparently it is not a datetime object. Continue as normal.
-                    answer = answer
+                    continue
             
             if settings.verbose:
                 for answer in answers:
