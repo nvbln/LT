@@ -12,9 +12,10 @@ def printHelp():
     print("Available arguments:")
     print("-h, --help       Prints this list.")
     print("-t, --test       Evaluates the program based on the test questions.")
-    print("-a, --atest		  Evaluates the program based on the adjusted test questions.")
+    print("-a, --atest		Evaluates the program based on the adjusted test questions.")
     print("-w, --wrapper    Does not load NLP.")
     print("-v, --verbose    Verbose mode. Prints debugging messages about it's progress.")
+    print("-f, --file       Specify the file that the questions should be read from.")
 
 def evaluateQuestion(nlp, line):
     # Input here the process for answering the question
@@ -32,7 +33,7 @@ def evaluateTestQuestions(test_choice):
         local_verbose = True
         settings.verbose = False
 
-    nlp = spacy.load('en_core_web_md')
+    nlp = spacy.load('en')
     
     if test_choice == 0:
         file = "all_questions_and_answers.tsv"
@@ -142,8 +143,8 @@ def main(argv, nlp):
     argument_list = full_cmd_arguments[1:]
     
     # Argument options: help, test
-    unix_options = "htawv"
-    gnu_options = ["help", "test", "atest", "wrapper", "verbose"]
+    unix_options = "htawvf:"
+    gnu_options = ["help", "test", "atest", "wrapper", "verbose", "file="]
 
     try:
         arguments, values = getopt.getopt(argument_list, unix_options, gnu_options)
@@ -151,6 +152,9 @@ def main(argv, nlp):
         # output error, and return with an error code
         print (str(err))
         sys.exit(2)
+        
+    is_file = False
+    fname = ''
 
     # Evaluate given options
     for current_argument, current_value in arguments:
@@ -166,7 +170,10 @@ def main(argv, nlp):
         elif current_argument in ("-w", "--wrapper"):
             load_nlp = False        
         elif current_argument in ("-v", "--verbose"):
-            settings.verbose = True 
+            settings.verbose = True
+        elif current_argument in ("-f", "--file"):
+            is_file = True
+            fname = current_value
 
     if test_questions:
         evaluateTestQuestions(test_choice)
@@ -179,36 +186,71 @@ def main(argv, nlp):
     
     if settings.verbose:
         print("State a question:")
-    for line in sys.stdin:
-        line = line.rstrip()
-        
-        if not settings.verbose:
-            idn = int(line.split()[0])
-            line = ' '.join(line.split()[1:])
-
-        # Finish the program when typing exit.
-        if line == "exit":
-            break
-
-        # Evaluate the question and get the answer.
-        answers = evaluateQuestion(nlp, line)
-        for i in range(len(answers)):
-            # If the answers are a date, print it nicely.
-            try:
-                struct_time = datetime.datetime.strptime(answers[i],
-                              '%Y-%m-%dT%H:%M:%SZ')
-                answers[i] = struct_time.strftime('%d %B %Y')
-            except ValueError:
-                # Apparently it is not a datetime object. Continue as normal.
-                continue
-        
-        if settings.verbose:
-            for answer in answers:
-                print(answer)
-        else:
-            print(idn, '\t'.join(answers))
-        if settings.verbose:
-            print("State a question:")
+    
+    if is_file:    
+        with open(fname) as f:
+            content = f.readlines()
+        for line in content:
+            line = line.rstrip()
+            
+            if not settings.verbose:
+                idn = int(line.split()[0])
+                line = ' '.join(line.split()[1:])
+    
+            # Finish the program when typing exit.
+            if line == "exit":
+                break
+    
+            # Evaluate the question and get the answer.
+            answers = evaluateQuestion(nlp, line)
+            for i in range(len(answers)):
+                # If the answers are a date, print it nicely.
+                try:
+                    struct_time = datetime.datetime.strptime(answers[i],
+                                  '%Y-%m-%dT%H:%M:%SZ')
+                    answers[i] = struct_time.strftime('%d %B %Y')
+                except ValueError:
+                    # Apparently it is not a datetime object. Continue as normal.
+                    continue
+            
+            if settings.verbose:
+                for answer in answers:
+                    print(answer)
+            else:
+                print(idn, '\t'.join(answers))
+            if settings.verbose:
+                print("State a question:")
+    else:
+        for line in sys.stdin:
+            line = line.rstrip()
+            
+            if not settings.verbose:
+                idn = int(line.split()[0])
+                line = ' '.join(line.split()[1:])
+    
+            # Finish the program when typing exit.
+            if line == "exit":
+                break
+    
+            # Evaluate the question and get the answer.
+            answers = evaluateQuestion(nlp, line)
+            for i in range(len(answers)):
+                # If the answers are a date, print it nicely.
+                try:
+                    struct_time = datetime.datetime.strptime(answers[i],
+                                  '%Y-%m-%dT%H:%M:%SZ')
+                    answers[i] = struct_time.strftime('%d %B %Y')
+                except ValueError:
+                    # Apparently it is not a datetime object. Continue as normal.
+                    continue
+            
+            if settings.verbose:
+                for answer in answers:
+                    print(answer)
+            else:
+                print(idn, '\t'.join(answers))
+            if settings.verbose:
+                print("State a question:")
 
 if __name__ == "__main__":
     nlp = None
