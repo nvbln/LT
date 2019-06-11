@@ -180,8 +180,9 @@ def main(argv, nlp):
     for line in sys.stdin:
         line = line.rstrip()
         
-        idn = int(line.split()[0])
-        line = ' '.join(line.split()[1:])
+        if not settings.verbose:
+            idn = int(line.split()[0])
+            line = ' '.join(line.split()[1:])
 
         # Finish the program when typing exit.
         if line == "exit":
@@ -190,7 +191,11 @@ def main(argv, nlp):
         # Evaluate the question and get the answer.
         answers = evaluateQuestion(nlp, line)
         
-        print(idn, '\t'.join(answers))
+        if settings.verbose:
+            for answer in answers:
+                print(answer)
+        else:
+            print(idn, '\t'.join(answers))
         if settings.verbose:
             print("State a question:")
 
