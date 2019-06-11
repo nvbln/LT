@@ -312,6 +312,8 @@ def syntacticAnalysis(nlp, line, with_names):
     if (aux_pos != 0 and advmod_pos == 0 and question[0].text.lower() == "how"
         and question[1].text.lower() == "many"):
         # Likely a how many question.
+        if settings.verbose:
+            print("How many question.")
 
         nsubj2_pos = sentenceContains(question, "nsubj", nsubj_pos + 1)
 
