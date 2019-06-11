@@ -58,17 +58,17 @@ def makeQuery(keywords):
     
     # Add filters from question
     if "property_attribute" in keywords:
-        addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
         if keywords["question_id"][0] == 9:
             # Likely a 'yes/no question'
             # ('X is Y of Z', with (Z == property_attribute)? as required answer.)
+            addFilter(filters, searchEntity(keywords["property_attribute"][0], "entity"))
             query_type = 'yes/no'
     
     # Add filters from questions
     if "specification" in keywords:       
-        addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
         if keywords["question_id"][0] == 7:
             # Likely a 'X is Y of Z', with Z as required answer.
+            addFilter(filters, searchEntity(keywords["specification"][0], "entity"))
             query_type = 'specified'
     
     
@@ -131,7 +131,7 @@ def submitTypeQuery(entity_id, property_ids, filters, query_type):
         query = query_dict[query_type][0].format(entity_id)
     
     data = []
-    
+
     # Try to fire a query
     try:
         data = requests.get(url, params={'query': query, 'format': 'json'}).json()
