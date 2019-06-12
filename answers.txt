@@ -1,0 +1,50 @@
+1	https://duncanlaurence.nl
+2 
+3	Hinduism
+4	0
+5	guitar	voice	harmonica
+6	Brainfeeder
+7	Warffum
+8	
+9	Alex Clare	Reg Traviss
+10	geographical object	beginning of a watercourse	River sources	/m/025mm1	0076024	origin of the watercourse	beginning of a watercourse	H.STMH	2025138	headwaters
+11	Yes
+12	Yes
+13	
+14	Yes
+15	http://commons.wikimedia.org/wiki/Special:FilePath/6PanelDigipakOasisCD2008.jpg	music term	1077267533	release	00560327	Music albums	32424	audio track	/m/02lx2r	Category:Albums	430745	Template:Infobox album	http://schema.org/MusicAlbum	http://dbpedia.org/ontology/Album	http://dbpedia.org/ontology/Album	Yandex.Music album ID	duration	Encyclopaedia Metallum release ID	performer	producer	publication date	Deezer album ID	recorded at	Spotify album ID	Google Play Music album ID	Discogs master ID	tracklist	AllMusic album ID	place of publication	Tidal album ID	00002488n	record label	genre	MusicBrainz release group ID	number of parts of this work of art	title	Discogs release ID	MusicBrainz release ID	distribution format	iTunes album ID	charted in	audio storage device	audio signal	Music-Albums	19
+16	Graceland
+17	Grammy Award for Best Rap/Sung Performance	Grammy Award for Best Rap AlbumAcademy Award for Best Original Song	0000 0001 1769 9370	0000 0003 6861 1900	0000 0003 6861 1919	72280391	122621077	no00010805	http://commons.wikimedia.org/wiki/Special:FilePath/Eminem%20-%20Concert%20for%20Valor%20in%20Washington%2C%20D.C.%20Nov.%2011%2C%202014%20%282%29%20%28cropped%29.jpg	St. Joseph	male	Kimberly Ann Scott	Kimberly Ann Scott	United States of America	human	singer-songwriter	music producer	actor	lyricist	film producer	songwriter	author	rapper	record producer	film actor	hip hop music	horrorcore	rap rock	hardcore hip hop	http://commons.wikimedia.org/wiki/Special:FilePath/Eminem%20logo.svg	w6tq9d37182968	201100	764	eminem	As2n6c7fmjt6fyysxuwgjgynzp4	eminem	Eminem	44770401	2215	Entity["MusicAct", "Eminem::3wkhm"]	1zcfgf8k0j5cmff	M00000052618	4005-73014	45	eminem	085188867	00933178	Eminem	b95ce3ff-3d05-4e87-9e01-c97b66af13d4	Slim Shady	http://eminem.com	XX1617998	22723233X	n02060614	497693	497336	51201	02000001103	Marshall Bruce Mathers III	96937	eminem	307189	Eminem	UCfM3zsQsOnfWNUppiycmBuw	169902	17491	2032	eminem	Eminem	person/eminem	Eminem	Eminem-musician	Interscope Records	nm0004896	Eminem discography	Warren	17 October 1972	/m/01vsgrn	js20020923020	Marshall	Portal:Eminem	538/000024466	1448152	biography/Eminem	Template:Eminem7dGJo4pcD2V6oG8kP0tJRR	38661	644153	3	45465	eminem	p287398	1800819151423	13	115506076351699721443	111051	eminemofficial	music/eminem	Shady Records	Aftermath Entertainment	Rawkus Records	Web Entertainment	Bassmint Productions	14025304j	Detroit	Mathers	Bruce	213047	Category:Eminem	6908515	0520767	voice	keyboard instrument	percussion instrument	sampler	English	M&M	Slim Shady	Em	Eminem	mn0000157676	eminem	01 January 1988	68.11	2507	eminem
+18	punk rock
+19	
+20	Bruno Mars	Mark Ronson
+21	Katowice	Murmansk	Tallinn	Tianjin	Odense	Kaliningrad	Newcastle upon Tyne	Q1996464	0000 0001 0658 9539	127790264	4094052-4	coat of arms of Groningen	409863	050	Point(6.55 53.216666666)5162	Category:Groningen (city)	1070	32843dc6-d9a0-46d2-bcf1-981bb8af4b4c	200952	729549	0031187	mayor	Ems-Occidental	Category:Births in Groningen (city)	Stadjer	Peter den Oudsten	Dutch Republic	Batavian Republic	Kingdom of Holland	Netherlands	France	http://commons.wikimedia.org/wiki/Special:FilePath/Hoge%20der%20Aa2.jpg	http://commons.wikimedia.org/wiki/Special:FilePath/Martini%20Toren.JPG	Hanseatic city	capital	populated place in the Netherlands	place with town rights and privileges	city	fortified town	http://commons.wikimedia.org/wiki/Special:FilePath/Flag%20Groningen%20city.svg	Zuidhorn	http://commons.wikimedia.org/wiki/Special:FilePath/Groningen%20stad%20wapen.svg	department Stad en Landen of Groningen	Groningen Department	Lordship of Groningen	Q2039165	2755251	7006984	Category:People from Groningen (city)	109642985832228	7	83.69	1931898	groningue	groningen-(hästras)	groninga	Groningen-Groningen-NL	Maps of Groningen (city)	Groningen	a3cef5c5-653f-4e8b-b9ba-e2474d817afa	groningen-30	1281	Ems-Occidental	Groningen	Groningen	Ems Department	flag of Groningen	Graz	Oldenburg	Drentsche Aa	http://commons.wikimedia.org/wiki/Special:FilePath/LocatieGroningen%20%28city%29.png	n79081849	9700–9747	Groningen (city)	/m/0d8s8	http://portal.groningen.nl/	http://commons.wikimedia.org/wiki/Special:FilePath/Groningen%20banner.jpg	Regional/Europe/Netherlands/Groningen/Groningen/	department Stad en Landen of Groningen	Groningen	Groningen	place/Groningen-Netherlands	list of national monuments in Groningen	list of municipal monuments in Groningen	Q9218539	Groningse	Groninger	Brockhaus and Efron Encyclopedic Dictionary
+22	
+23	Alfred Lion	Francis Wolff	Max Margulis
+24	
+25	Red Right Hand
+26	
+27	Yes
+28	02 October 1951	01 January 1971
+29	http://commons.wikimedia.org/wiki/Special:FilePath/LL-Q188%20%28deu%29-Sebastian%20Wallroth-Polizei.wav	topic/police	4046595-0	sh85104183	law enforcement agency	00565381	Police	D016495	1347	police officer	/m/05ws7	Category:Police	Police	8402	Portal:Police	10643529	44G22	Armenian Soviet Encyclopedia	police	subject/police	State-Police	polisensujet/police	police-protection	294932291	policing	75241100mediatopic/20000133	Polizei
+30	
+31	0
+32	Yes
+33	actor	record producer	guitarist	disc jockey	songwriter	painter	autobiographer	composer	lyricist	poet	film director	screenwriter	film actor	singer
+34	No
+35	Steve Lukather	Simon Phillips	David Paich	Steve Porcaro	Mike Porcaro	Dennis Frederiksen	David Hungate	Greg Phillinganes	Jean-Michel Byron	Jeff Porcaro	Bobby Kimball	Joseph Williams
+36	0
+37	Michael Jackson
+38	No
+39	No
+40	
+41	Yes
+42	Jamaica
+43	Yes
+44	Yes
+45	No
+46	tenor
+47	Oxford
+48	
+49	EMI Music Japan	major label	EMI Group	31 March 1931	01 January 1931	29 March 1928	01 January 2012	/m/011k1h	Universal Music Group	Sony (United Kingdom)	Category:EMI	a8f3eb19-05db-4895-b1d2-7ec911022a5e	15000	211023000	37590000	1114182000	1606072000	grid.480108.5	100005125	co/007573	United Kingdom	http://commons.wikimedia.org/wiki/Special:FilePath/Beatles%20ad%201965.JPG	http://commons.wikimedia.org/wiki/Special:FilePath/Emi%20building.jpg	business	privately held company	record company	enterprise	holding company	record label	Wikipedia article covering multiple topics	Vivendi	http://commons.wikimedia.org/wiki/Special:FilePath/EMI%20logo.svg	Virgin EMI Records	Studios 301	EMI Music Publishing Ltd.	London	EMI United Kingdom	0000 0004 0502 5178	153494571	music industry	consumer electronics	London	Warner Music Group	http://www.universalmusic.com/label/emi/	public limited company	Priority Records	Music Choice	EMI Classics	Picture Music International	Solid State Records	EMI Televisa Music	Sparrow RecordsDoggystyle Records	Cooltempo Records	EMI United Kingdom	ImperialPathé-Marconi	EMI	4298113997	01qstkr73
+50	Robbie Williams discography	YouTube	13 February 1974	Robbie	Robbie Williams	XX1455897	99030942	508/000024436	bass guitar	violin	guitar	harmonica	mn0000227697	170554	mp14176	robbiewilliams	robbiewilliams	428565	326695	Robbie-williams	173304	226948	15226	robbiewilliams	music/robbie-williams	91280	Sony Music	140016118	078052289	nm0005560	Robbie Williams	tenor	db4624cf-0e44-481e-a9dc-2142b833ec2f	Take That	Williams	Peter	Maximilian	http://www.robbiewilliams.com	177236906	37780	a10903318	02000001008	marimba	percussion instrument	14240	17212	robbiewilliams	212	+RobbieWilliams	Robbie+Williams	Robbie-Williams-3	populaire-muziek/robbie-williams	Britpopsoft rock	electronic music	Amadeus Austrian Music Awards	0000 0001 0881 3493	27044904	119429888	nb98018889	Chrysalis Records	Island Records	01 January 1990	Robbie_Williams	http://commons.wikimedia.org/wiki/Special:FilePath/Robbie%20Williams.jpg	Stoke-on-Trent	male	Ayda Field	United Kingdom	human	Hollywood United F.C.	singer-songwriter	film actor	record producer	singer	http://commons.wikimedia.org/wiki/Special:FilePath/Robbie%20Williams%20Signature.svg	dance music	pop rockpop music	alternative rock	Capitol Records	Virgin Records	EMI	Take That	/m/09qr6	js20020325020	Robert	266396	Category:Robbie Williams	voice	keyboard instrument	English	9209	Robbie Williams2HcwFjNelS49kFbfvMxQYw	p319067	1019294	26015	17973	robbiewilliamsofficial	290726	137	Az6kf44t2vk6tu3c3krat6vaucu	robbie-williams	b8nqtptv1vxp2hp2215
